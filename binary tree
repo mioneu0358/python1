@@ -9,7 +9,7 @@ class BinaryTree():
     def __init__(self):
         self.root = None        
 
-    def insert(self,data):
+    def insert(self,data):      #삽입
         n = Node(data)              #n은 새로운 노드
         if self.root is None:       #루트가 비어있으면 n이 루트가 된다
             self.root = n
@@ -29,6 +29,19 @@ class BinaryTree():
                 if current is None:         #현위치가 비어있으면 새로운 노드는 부모노드의 오른쪽에 링크
                     parent.right = n        
                     break
+    
+
+    def get_min(self):
+        current = self.root
+        while current.left is not None:
+            current = current.left
+        return current
+    
+    def get_max(self):
+        current = self.root
+        while current.right is not None:
+            current = current.right
+        return current
 
 
 
@@ -64,18 +77,13 @@ class BinaryTree():
             self.postorder(node.right)
             print(node.data, end = '')
 
-tree = BinaryTree()
-tree.insert(5)
-tree.insert(2)
-tree.insert(3)
-tree.insert(1)
-tree.insert(9)
-tree.insert(8)
-tree.insert(7)
-
-tree.inorder(tree.root)
-print()
-tree.preorder(tree.root)
-print()
-tree.postorder(tree.root)
-
+    def delete_node(self,current,item):
+        if current is None:
+            return None
+        if current.data > data:
+            current.left = self.delete_node(current.left, data)
+            return current
+        elif currnt.data < data:
+            current.right = self.delete_node(current.right, data)
+            return current
+        else:
