@@ -1,84 +1,68 @@
-# # #클레스
-# # class FourCal:
-# #     # pass    #추가 내용이 없어도 상속받은 기능은 그대로 사용가능
-# #     #생성자(멤버 메소드)
-# #     def __init__(self):
-# #         #멤버 변수(속성)
-# #         self.result = 0
-# #
-# #         #멤버 메소드
-# #     def add(self, num):
-# #         self.result += num
-# #         return self.result
-# #
-# #     def sub(self, num):
-# #         self.result -= num
-# #         return self.result
-# #
-# #     def mul(self,num):
-# #         self.result *= num
-# #         return self.result
-# #
-# #     def div(self,num):
-# #         self.result /= num
-# #         return self.result
-# #
-# # cal1  = FourCal()
-# #
-# #
-# # # # 상속 (Inheritance)
-# # #
-# # class MoreFourCal(FourCal):
-# #     def pow(self, num):
-# #         self.result = self.result ** num
-# #         return self.result
-# #
-# #     #add 오버라이딩(overriding)
-# #     def add(self, num):
-# #         super().add(num)    #super class = 부모 클래스 s
-# #         return self.result
-#
-# #     #연산자 오버라이딩
-# #     def __add__(self, other):
-# #         new_cal = MoreFourCal()
-# #         new_c
-# #         self.result + other.result
-# #
-# #
-# # mcal1 = MoreFourCal()
-# # mcal2 = MoreFourCal()
-# # mcal1.add(5)
-# # mcal2.add(7)
-# #
-# # list
-#
-# class Student:
-#     def __init__(self):
-#         self.result = 0
-#
-#     def sum(self, val1, val2, val3):
-#         self.value = val1 + val2 + val3
-#         return self.value
-#
-#     def avg(self,val1, val2, val3):
-#         self.value = (val1+ val2+ val3)/ 3
-#         return self.value
-#
-# std = Student()
-# std.sum(10,20,30)
-# print(std.value)
-# std.avg(10,20,30)
-# print(std.value)
+# Deque(Double-ended queue) 덱
+class DequeElement:
+    def __init__(self, value, left, right):
+        self.value = value
+        self.left = left
+        self.right = right
+
+class Deque:
+    def __init__(self):
+        self.rear = None
+        self.front = None
+
+    def insert_rear(self, value):
+        elem = DequeElement(value, None, self.rear)
+        if self.rear is None:
+            self.rear = elem
+            self.front = elem
+        else:
+            self.rear.left = elem
+            self.rear = elem
+
+    def insert_front(self, value):
+        elem = DequeElement(value, self.front, None)
+        if self.rear is None:
+            self.rear = elem
+            self.front = elem
+        else:
+            self.front.right = elem
+            self.front = elem
+
+    def delete_rear(self):
+        if self.rear is None:   # 원소가 없는 경우
+            return None
+        value = self.rear.value
+        if self.rear == self.front:  # 원소가 하나인 경우
+            self.rear = self.front = None
+        else:   # 원소가 두개 이상인 경우
+            self.rear = self.rear.right
+            self.rear.left = None
+        return value
+
+    def delete_front(self):
+        if self.rear is None:   # 원소가 없는 경우
+            return None
+        value = self.front.value
+        if self.rear == self.front:  # 원소가 하나인 경우
+            self.rear = self.front = None
+        else:   # 원소가 두개 이상인 경우
+            self.front = self.front.left
+            self.front.right = None
+        return value
+
+    def reverse(self):
+        curr = self.rear
+        while curr is not None:
+            curr.left, curr.right = curr.right, curr.left
+            curr = curr.left
+        self.rear, self.front = self.front, self.rear
 
 
-# def solution(s):
-#     x = {'zero':0,'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8,'nine':9}
-#     a,b = x.keys(),x.values()
-#     for i in a:
-#         if i in s:
-#             s.replace(i,b[])
-#     answer = s
-#     return answer
+d = Deque()
 
-
-
+for i in range(1, 6):
+    d.insert_rear(i)
+    d.insert_front(-i)
+d.reverse()
+for i in range(10):
+    print(d.delete_rear())
