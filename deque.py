@@ -11,23 +11,23 @@ class Deque:
 
 
     def insert_rear(self,value):
-        elem = DQelement(self,None,None)
+        elem = DQelement(self,None,self.front)
         if self.rear is None:
             self.rear = elem
             self.front = elem
         else:
-            self.rear = elem
+            self.front = elem
             self.rear.left = elem
 
 
     def insert_front(self,value):
-        elem = DQelement(self,None, None)
+        elem = DQelement(self,self.front, None)
         if self.rear is None:
             self.rear = elem
             self.front = elem
         else:
-            self.front = elem
-            self.rear.right = elem
+            self.rear = elem
+            self.front.right = elem
 
 
     def delete_rear(self):
