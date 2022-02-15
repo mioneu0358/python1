@@ -1,3 +1,8 @@
+#deque (double ended queue) =  list와 같이 요소들을 한곳에 담아 두는 배열
+#Queue(큐)는 FIFO방식이지만, 덱은 양방향인 큐여서 양쪽에서 요소를 추가 제거 할 수 있다.
+#list가 있음에도 deque를 사용하는 이유는 덱의 속도가 훨씬 빠르기 때문이다.
+
+
 class DQelement:
     def __init__(self, value, left, right):
         self.value = value
