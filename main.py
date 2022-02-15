@@ -1,74 +1,90 @@
+# Stack 스택
+# 1. 쌓이는 형태의 자료구조(Data structure)
+# 2. list로 구현이 되어있다.
+# 3. 맨 마지막에 넣은게 먼저 나오고, 처음 넣은게 마지막에 나온다(lifo)
 
-#deque (double ended queue) =  list와 같이 요소들을 한곳에 담아 두는 배열
-#Queue(큐)는 FIFO방식이지만, 덱은 양방향인 큐여서 양쪽에서 요소를 추가 제거 할 수 있다.
-#list가 있음에도 deque를 사용하는 이유는 덱의 속도가 훨씬 빠르기 때문이다.
 
+class StackElement():
+    #생성자 생성
+    def __init__(self,data,next):
+        #요소의 값
+        self.data = data
+        # 다음 요소의 위치
+        self.next = next
 
-# Deque(Double-ended queue) 덱
-class DequeElement:
-    def __init__(self, value, left, right):
-        self.value = value
-        self.left = left
-        self.right = right
-
-class Deque:
+class Stack:
     def __init__(self):
-        self.rear = None
-        self.front = None
+        self.top = None
 
-    def insert_rear(self, value):
-        elem = DequeElement(value, None, self.rear)
-        if self.rear is None:
-            self.rear = elem
-            self.front = elem
-        else:
-            self.rear.left = elem
-            self.rear = elem
+    def push(self,data):
+         #스텍이 비어있는 경우
+         if self.top is None:
+             elem = StackElement(data, None)
+             self.top = elem
+         #스텍이 있는 경우
+         else:
+            elem = StackElement(data, self.top)
+            self.top = elem
 
-    def insert_front(self, value):
-        elem = DequeElement(value, self.front, None)
-        if self.rear is None:
-            self.rear = elem
-            self.front = elem
-        else:
-            self.front.right = elem
-            self.front = elem
-
-    def delete_rear(self):
-        if self.rear is None:   # 원소가 없는 경우
+    def pop(self):
+        if self.top is None:
             return None
-        value = self.rear.value
-        if self.rear == self.front:  # 원소가 하나인 경우
-            self.rear = self.front = None
-        else:   # 원소가 두개 이상인 경우
-            self.rear = self.rear.right
-            self.rear.left = None
-        return value
+        else:
+            temp = self.top
+            self.top = temp.next
+            return temp.data
 
-    def delete_front(self):
-        if self.rear is None:   # 원소가 없는 경우
+    def peek(self):
+        if self.top is None:
             return None
-        value = self.front.value
-        if self.rear == self.front:  # 원소가 하나인 경우
-            self.rear = self.front = None
-        else:   # 원소가 두개 이상인 경우
-            self.front = self.front.left
-            self.front.right = None
-        return value
-
-    def reverse(self):
-        curr = self.rear
-        while curr is not None:
-            curr.left, curr.right = curr.right, curr.left
-            curr = curr.left
-        self.rear, self.front = self.front, self.rear
+        else:
+            return self.top.data
 
 
-d = Deque()
 
-for i in range(1, 6):
-    d.insert_rear(i)
-    d.insert_front(-i)
-d.reverse()
-for i in range(10):
-    print(d.delete_rear())
+
+#프로그래머스 스택관련문제 
+
+
+# prices = [1, 2, 3, 2, 3]
+# answer = [0]
+# t_a = []
+# for p in list(reversed(prices))[1:]:
+#     time = 0
+#     while t_a and t_a[-1][0] >= p:
+#         #스텍이 비어있지 않고, top의 가격이 현재가 보다 크거나 같으면
+#         time += t_a.pop()[1]
+#         #스텍에서 시간을 꺼내서
+#     t_a.append([p, time +1])
+#     # 더해준다
+#     answer.append(time +1)
+# answer = reversed(answer)
+# print(list(answer))
+
+
+
+# def solution(prices):
+#     # 마지막 price는 항상 0초 이므로 0을 미리 넣음.
+#     answer = [0]
+#
+#     # 가격-시간 스택 선언
+#     t_a = []
+#
+#     # prices의 마지막을 제외한 부분을 역순회함.
+#     for p in list(reversed(prices))[1:]:
+#
+#         # 스택이 비어있지 않고 스택의 TOP의 가격이 현재 가격보다 크거나 같으면
+#         # 스택에서 시간을 빼서 더해줌
+#         time = 0
+#         while t_a and t_a[-1][0] >= p:
+#             time += t_a.pop()[1]
+#
+#         # 스택의 TOP에 현재 가격-시간을 넣어줌
+#         t_a.append([p, time + 1])
+#         answer.append(time + 1)
+#
+#     answer.reverse()
+#     return answer
+
+
+
