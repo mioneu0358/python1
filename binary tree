@@ -1,98 +1,117 @@
-class Node:
-    def __init__(self,data):
-        self.data = data            #노드엔 자신의 데이터와 왼쪽 오른쪽의 자식트리를 가질 링크가 있다.
-        self.left = None
-        self.right = None
+class Treenode:
+    def __init__(self, value,left,right):
+        self.value = value  # 노드엔 자신의 데이터와 왼쪽 오른쪽의 자식트리를 가질 링크가 있다.
+        self.left = left
+        self.right = right
 
 
-class BinaryTree():
+class BinaryTree:
     def __init__(self):
         self.root = None
 
-    def insert(self,data):      #삽입
-        n = Node(data)              #n은 새로운 노드
-        if self.root is None:       #루트가 비어있으면 n이 루트가 된다
-            self.root = n
+    def insert(self, value):  # 삽입
+        node = Treenode(value,None,None)  # n은 새로운 노드
+        if self.root is None:  # 루트가 비어있으면 n이 루트가 된다
+            self.root = node
             return
-
-        current = self.root         #루트를 현위치로 바인딩하고
-
+        #트리가 비어있지 않는 경우
+        curr = self.root  # 루트를 현위치로 바인딩하고
         while True:
-            parent = current        #현위치를 부모로 바인딩한뒤
-            if data < current.data: #새로운 데이터 값이 현위치의 값보다 작으면
-                current = current.left  #현위치의 좌측 자식 노드가 현위치가 되고
-                if current is None:     #바뀐 현위치가 비어있으면
-                    parent.left = n     #새로운 노드는 부모 노드의 왼쪽에 링크시켜준다
-                    break
+            if value >= curr.value:        # 새로운 데이터 값이 현위치의 값보다 작으면
+                if curr.right is None:      # 바뀐 현위치가 비어있으면
+                    curr.right = node       # 새로운 노드는 부모 노드의 왼쪽에 링크시켜준다
+                    return
+                curr = curr.right
             else:
-                current = current.right     #반대의 경우 현위치를 현위치의 우측 자식 노드로 바꾸고
-                if current is None:         #현위치가 비어있으면 새로운 노드는 부모노드의 오른쪽에 링크
-                    parent.right = n
-                    break
+                if curr.left is None:
+                    curr.left = node
+                    return
+                curr = curr.left
 
 
-    def get_min(self,current):
-        while current.left is not None:
-            current = current.left
-        return current
-
-    def get_max(self,current):
-        while current.right is not None:
-            current = current.right
-        return current
-
-
-
-    def find(self,data):
-        current = self.root               #루트를 현재로 놓고
-        while True:
-            if current is None:           #현재가 비어있을땐   None
-                return None
-            if current.data > data:       #찾는 데이터가 현재 데이터 보다 작으면 왼쪽 자식트리로
-                current = current.left
-            elif current.data < data:     #찾는 데이터가 현재 데이터 보다 크면 오른쪽 자식트리로
-                current = current.right
+    def find(self, value):
+        curr = self.root  # 루트를 현재로 놓고
+        while curr:
+            if curr.value == value:
+                return True
+            elif curr.value < value:
+                curr = curr.right
             else:
-                return current
+                curr = curr.left
+        return False
+
+    def delete(self, value):
+        parent = None           #현재 노드의 부모
+        curr = self.root        #현재 노드
+        while curr:
+            if curr.value == value:
+                #삭제하려는 노드의 자식 노드가 없을 경우
+                if curr.right is None and curr.left is None:
+                    if parent.left == curr:
+                        parent.left = None
+                    else:
+                        parent.right = None
+                #삭제하려는 노드의 자식 노드가 하나인 경우
+                elif curr.right is None and curr. lef is not None:
+                    if parent.left == curr:
+                        parent.left = curr.left
+                    else:
+                        parent.right = curr.left
+                elif curr.right is not None and curr.left is None:
+                    if parent.left == curr:
+                        parent.left = curr.right
+                    else:
+                        parent.right =  curr.right
+                #삭제하려는 노드의 자식 노드가 두개인 경우(왼쪽 서브트리의 제일 오른쪽 값을 삭제할 노드의 위치로 복사)
+                else:
+                    #후속자를 찾는 과정
+                    ret_data = curr.value   #리턴할 삭제값 저장
+                    succ_p = None           #후속자의 부모
+                    succ = curr.left        #후속자를 삭제할 값의 왼쪽 서브트리에서 찾는다
+                    while succ.right is not None:
+                        succ_p= succ
+                        succ = succ.right
+                    curr.value = succ. value    #삭제 노드의 위치게 후속자의 값 복사
+                    succ_p.right = succ.left    #후속자와 후속자 부모의 연결을 끊고 왼쪽 자식을 연결해준다(None일 경우도 있다)
+                    return ret_data
+                return curr.value
+            elif curr.value < value:
+                parent = curr
+                curr = curr.right
+            else:
+                parent = curr
+                curr = curr.left
+        return None
+
+    def get_min(self, curr):
+        while curr.left is not None:
+            curr = curr.left
+        return curr
+
+    def get_max(self, curr):
+        while curr.right is not None:
+            curr = curr.right
+        return curr
 
 
-    def preorder(self,node):        #전위순환 = 자신, 왼쪽, 오른쪽
-        if node is not None:                #노드가 비어있지 않으면
-            print(node.data, end = '')      #노드의 데이터를 출력하고
-            self.preorder(node.left)        #노드의 왼쪽
-            self.preorder(node.right)       #노드의 오른쪽 순으로 출발한다
+    def preorder(self, node):  # 전위순환 = 자신, 왼쪽, 오른쪽
+        if node is not None:  # 노드가 비어있지 않으면
+            print(node.value, end='')  # 노드의 데이터를 출력하고
+            self.preorder(node.left)  # 노드의 왼쪽
+            self.preorder(node.right)  # 노드의 오른쪽 순으로 출발한다
 
-
-    def inorder(self,node):         #중위순환 = 왼쪽, 자신, 오른쪽
+    def inorder(self, node):  # 중위순환 = 왼쪽, 자신, 오른쪽
         if node is not None:
             self.inorder(node.left)
-            print(node.data,end= '')
+            print(node.value, end='')
             self.inorder(node.right)
 
-    def postorder(self,node):       #후위순환 = 왼쪽, 오른쪽, 자신
+    def postorder(self, node):  # 후위순환 = 왼쪽, 오른쪽, 자신
         if node is not None:
             self.postorder(node.left)
             self.postorder(node.right)
-            print(node.data, end = '')
+            print(node.value, end='')
 
-    def delete_node(self,current,item):
-        if current is None:
-            return None
-        if current.data > data:
-            current.left = self.delete_node(current.left, data)
-            return current
-        elif currnt.data < data:
-            current.right = self.delete_node(current.right, data)
-            return current
-        else:
-            if (current.left is None) & (current.right is None):
-                return None
-            elif current.left is None:
-                return current.right
-            elif current.right is None:
-                return current.left
-            else:
-                
 
 
 tree = BinaryTree()
