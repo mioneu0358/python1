@@ -1,19 +1,22 @@
-def binary_search(a,data):
-    Left = 0
-    Right = len(a)
-    While left <= right:
-      Mid = (left + right) // 2
-      If data == a[mid]:
+def binary_search(list_a,data):
+    left = 0
+    right = len(list_a) -1
+    while left <= right:
+      mid = (left + right) // 2
+      if data == list_a[mid]:
           return 1
-      elif data > a[mid]:
+      elif data > list_a[mid]:
           left = mid + 1
       else:
           right = mid -1
     return 0
-N=int(input())
-A= list(map(int, input().split()))
-M= int(input())
-B = list(map(int, input().split()))
 
-For i in range(len(b)):
-      Print(binary_search(A.B[i]))
+
+#백준 1920 수 찾기 
+N =int(input())
+A = list(map(int, input().split()))
+A.sort()
+M = int(input())
+B = list(map(int, input().split()))
+for i in range(M):
+      print(binary_search(A,B[i]))
