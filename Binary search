@@ -1,0 +1,19 @@
+def binary_search(a,data):
+    Left = 0
+    Right = len(a)
+    While left <= right:
+      Mid = (left + right) // 2
+      If data == a[mid]:
+          return 1
+      elif data > a[mid]:
+          left = mid + 1
+      else:
+          right = mid -1
+    return 0
+N=int(input())
+A= list(map(int, input().split()))
+M= int(input())
+B = list(map(int, input().split()))
+
+For i in range(len(b)):
+      Print(binary_search(A.B[i]))
