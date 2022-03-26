@@ -1,0 +1,86 @@
+# 버블정렬
+# 서로 인접한 두 원소를 검사하여 정렬하는 알고리즘
+# 인접한 2개의 원소를 비교하여 크기가 순서대로 되어 있지 않으면 서로 교환한다.
+# 서로 교환시  좌측이  작은값이 오도록 정렬한다.
+# def bouble_sort(list_a):
+#     n = len(list_a)     #n = list_a의 길이
+#     for i in range(n-1):
+#         for j in range(n - i - 1):
+#             if list_a[j] > list_a[j+1]: #앞의 값이 뒤의 값보다 크다면
+#                 list_a[j] , list_a [j+1] = list_a[j+1], list_a[j]   #두개의 값을 스왑해준다
+#                 print(list_a)
+#
+# bouble_sort(list_a)
+
+
+#선택 정렬
+#한바퀴 돌 때 가장 작은 값을 찾아 맨 앞과 교환하는 방식의 정렬
+#가장 작은 값을 구하는게 key
+
+# list_a =[8,4,6,2,9,1,3,7,5]
+# def select_sort(list_a):
+#     n = len(list_a)
+#     for i in range(n):
+#         min = i         #min = 최소값이 있는 인덱스 번호
+#         for j in range(i+ 1, n):
+#             if list_a[j] < list_a[min]:     #최소값으로 정한 값 보다 j번째 값이 더 작다면
+#                 min = j                     #min =  j번째로 변경
+#         list_a[i], list_a[min] = list_a[min], list_a[i] #최소값과 범위 내 첫번째 위치의 값을 스왑
+#     return list_a
+#
+# print(select_sort(list_a))
+
+
+#삽입 정렬
+#정렬된 데이터 그룹을 늘려가며 추가되는 데이터는 알맞은 자리에 삽입하는 방식
+#정렬된 데이터 그룹에 추가시 오른쪽에서 부터 크기 비교 후 삽입
+
+# def insertion_sort(list_a):
+#     n = len(list_a)
+#     for i in range(1,n):
+#         for j in range(i,0,-1):
+#             if list_a[j-1]> list_a[j]:
+#                 list_a[j-1],list_a[j] = list_a[j],list_a[j-1]
+#     print(list_a)
+#
+# list_a =[8,4,6,2,9,1,3,7,5]
+# insertion_sort(list_a)
+
+
+#다 한사람은 백준 2750번 수 정렬하기 풀기
+#내장함수를 제외한 방법으로 풀기!
+# def bouble_sort(list_a):
+#     n = len(list_a)     #n = list_a의 길이
+#     for i in range(n-1):
+#         for j in range(n - i - 1):
+#             if list_a[j] > list_a[j+1]: #앞의 값이 뒤의 값보다 크다면
+#                 list_a[j] , list_a [j+1] = list_a[j+1], list_a[j]   #두개의 값을 스왑해준다
+#     return list_a
+# n = int(input())        # 첫번째 5
+# a = []
+# for i in range(n):
+#     a.append(int(input()))
+#
+# for i in bouble_sort(a):
+#     print(i)
+
+
+#1427번 소트 인사이트 풀기
+#선택정렬로 풀기
+
+
+# def select_sort(list_a):
+#     n = len(list_a)
+#     for i in range(n):
+#         min = i         #min = 최소값이 있는 인덱스 번호
+#         for j in range(i+ 1, n):
+#             if list_a[j] < list_a[min]:     #최소값으로 정한 값 보다 j번째 값이 더 작다면
+#                 min = j                     #min =  j번째로 변경
+#         list_a[i], list_a[min] = list_a[min], list_a[i] #최소값과 범위 내 첫번째 위치의 값을 스왑
+#     return list_a
+#
+#
+# list_a = list(input())
+# for i in range(1,len(list_a)+1):
+#     print(select_sort(list_a)[-i],end='')
+
