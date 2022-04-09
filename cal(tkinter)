@@ -1,0 +1,128 @@
+from tkinter import *
+from tkinter.ttk import *
+from cal1 import *
+
+#메인창 만들기
+root = Tk()
+
+root.title('Calculater')
+root.geometry('380x240')
+
+#Frame
+frm = Frame(root)
+frm.pack(expand = True)
+
+ent_expr = Entry(frm,font = '맑은고딕 15')
+ent_expr.grid(column = 0, row = 0, columnspan=4, sticky = 'wens')
+
+
+#Button
+
+btn_plus = Button(frm, text = '+')
+btn_plus.grid(column = 3, row =1,  sticky = 'wens')
+btn9 = Button(frm, text = '9')
+btn9.grid(column = 2, row =1,  sticky = 'wens')
+btn8 = Button(frm, text = '8')
+btn8.grid(column = 1, row =1,  sticky = 'wens')
+btn7 = Button(frm, text = '7')
+btn7.grid(column = 0, row =1,  sticky = 'wens')
+
+btn_minus = Button(frm, text = '-')
+btn_minus.grid(column = 3, row =2,sticky = 'wens')
+btn6 = Button(frm, text = '6')
+btn6.grid(column = 2, row =2, sticky = 'wens')
+btn5 = Button(frm, text = '5')
+btn5.grid(column = 1, row =2,  sticky = 'wens')
+btn4 = Button(frm, text = '4')
+btn4.grid(column = 0, row =2, sticky = 'wens')
+
+btn_multiply = Button(frm, text = '*')
+btn_multiply.grid(column = 3, row =3,  sticky = 'wens')
+btn3 = Button(frm, text = '3')
+btn3.grid(column = 2, row =3,  sticky = 'wens')
+btn2 = Button(frm, text = '2')
+btn2.grid(column = 1, row =3,  sticky = 'wens')
+btn1 = Button(frm, text = '1')
+btn1.grid(column = 0, row =3,  sticky = 'wens')
+
+btn_division = Button(frm, text = '/')
+btn_division.grid(column = 3, row =4,  sticky = 'wens')
+btn_eq = Button(frm, text = '=')
+btn_eq.grid(column = 2, row =4,  sticky = 'wens')
+btn0 = Button(frm, text = '0')
+btn0.grid(column = 1, row =4,  sticky = 'wens')
+btn_del = Button(frm, text = 'del')
+btn_del.grid(column = 0, row =4,  sticky = 'wens')
+
+
+# 입력 함수를 정의 후 사용
+def input_expr(txt: str):
+    expr = ent_expr.get()       #Entry의 수식을 가져옴
+    if len(expr) > 0 and expr[-1] in ['+', '-', '*', '/'] and txt in ['+', '-', '*', '/']:
+        lexpr = list(expr)
+        lexpr[-1] = txt
+        expr = ''.join(lexpr)
+    elif len(expr) == 0 and txt in ('+','-'):
+        expr += '0' + txt
+    else:
+        expr += txt     #수식에 추가되는 문자를 붙임
+    ent_expr.delete(0,'end')    #Entry의 기존 수식을 전부 지움
+    ent_expr.insert(0, expr)     #새로운 수식을 Entry에 넣어줌
+
+
+
+# 계산한 결과 값을 ent에 출력하는 함수
+# def get_result(ent_expr):
+#     # if len(ent_expr.get() == 0):
+#     #     return
+#     expr = ent_expr.get()
+#     ent_expr.delete(0, 'end')
+#     cal = IntCalc()
+#     cal.set_expression(expr)
+#     cal.infix_to_prefix()
+#     return cal.evaluation()
+
+# 정환쌤 코드
+def get_result():
+    expr = ent_expr.get()
+    if len(expr) == 0:
+        return
+    if expr[-1] in ['+','-','*','/']:
+        expr = expr[:-1]
+    cal1 = IntCalc()
+    cal1.set_expression(expr)
+    result = cal1.evaluation()
+    ent_expr.delete(0,'end')
+    ent_expr.insert(0,str(result))
+
+
+
+#Button act
+btn9.configure(command=lambda : input_expr('9'))
+btn8.configure(command=lambda : input_expr('8'))
+btn7.configure(command=lambda : input_expr('7'))
+btn6.configure(command=lambda : input_expr('6'))
+btn5.configure(command=lambda : input_expr('5'))
+btn4.configure(command=lambda : input_expr('4'))
+btn3.configure(command=lambda : input_expr('3'))
+btn2.configure(command=lambda : input_expr('2'))
+btn1.configure(command=lambda : input_expr('1'))
+btn0.configure(command=lambda : input_expr('0'))
+
+btn_minus.configure(command=lambda : input_expr('-'))
+btn_division.configure(command=lambda : input_expr('/'))
+btn_multiply.configure(command=lambda : input_expr('*'))
+btn_plus.configure(command=lambda : input_expr('+'))
+
+
+
+btn_eq.configure(command=lambda : get_result())
+btn_del.configure(command=lambda :  ent_expr.delete(0,'end'))
+
+
+
+
+
+#메인 루프이벤트 처리
+root.mainloop()
+
