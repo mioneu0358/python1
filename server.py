@@ -53,19 +53,20 @@ class SockServer:
         self.sock.listen(5)
         while True:
             client_sock, address = self.sock.accept()
-            client_sock.settimeout(0.01)    #
+            client_sock.settimeout(0.01)
             self.clients.append(client_sock)
             print(address,"에서 연결")
 
-    def send(self):
-
-        while True:
-            msg = input()
-            for c in self.clients:
-                try:
-                   c.send(bytes(msg, encoding='utf8'))
-                except socket.timeout:
-                    continue
+    def send(self,msg):
+        for c in self.clients:
+            try:
+               c.send(bytes(msg, encoding='utf8'))
+            except socket.timeout:
+                continue
+            except ConnectionResetError:
+                continue
+            except ConnectionAbortedError:
+                continue
 
 
 
@@ -78,18 +79,20 @@ class SockServer:
                     data = c.recv(255)
                     msg = data.decode(encoding='utf8')
                     print(msg)
+                    self.send(msg)
                 except socket.timeout:
                     continue
+                except ConnectionResetError:
+                    del c
+                except ConnectionAbortedError:
+                    del c
 
     #통신 시작 함수
     def communicate(self):
         #각각의 스레드 생성
         t_accept = threading.Thread(target=self.accept, daemon = True)
-        t_send = threading.Thread(target=self.send, daemon=True)
         t_recv = threading.Thread(target=self.recv,daemon=True)
-
         t_accept.start()
-        t_send.start()
         t_recv.start()
 
 
