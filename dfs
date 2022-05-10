@@ -1,0 +1,57 @@
+#####python#########
+
+n, m, v = map(int, input().split())
+graph = [[0] * (n+1) for _ in range(n+1)]
+visited = [0] * (n+1)
+
+for _ in range(m):
+  x, y = map(int, input().split())
+  graph[x][y] = graph[y][x] = 1
+
+def dfs(graph, i, visited):
+  visited[i] = 1
+  print(i, end=' ')
+  for j in range(len(graph[i])):
+    if graph[i][j] == 1 and not visited[j]:
+      dfs(graph, j, visited)
+dfs(graph, v, visited)
+
+
+
+// C//
+#include <stdio.h>
+int graph[1001][1001] = {0};
+int visit[1001] = {0};
+
+void dfs(int v, int n)
+{
+    int i;
+    visit[v] = 1;
+    printf("%d", v);
+    for (i =1; i<= n; i++)
+    {
+        if(graph[v][i] == 1 && visit[i] ==0)
+        {
+            dfs(i,n);
+        }
+    }
+    return;
+
+}
+
+int main(void)
+{
+    int n,m,v,i;
+    int x,y;
+
+    scanf("%d %d %d", &n,&m,&v);
+    for (i =1; i< m+1; i++)
+    {
+        scanf("%d %d", &x,&y);
+        graph[x][y] = 1;
+        graph[y][x] = 1;
+    }
+
+    dfs(v,n);
+    return 0;
+}
