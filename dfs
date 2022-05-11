@@ -58,3 +58,52 @@ int main(void)
     dfs(v,n);
     return 0;
 }
+
+
+
+
+
+
+#include <stdio.h>
+void dfs(int* graph, int* visit, int idx)
+{
+    int i,j,lengh;
+    length = sizeof(graph[idx])/sizeof(graph[0][0])
+    
+    for (i =0; i<length; i++)
+    {
+        if(graph[idx][i] == 1)
+        {
+            for (j =0; visit[j] !='\0'; j++)
+            {
+                if (i != visit[j])
+                {
+                    continue;
+                }
+            }
+        }
+    }
+    return;
+
+}
+
+int main(void)
+{
+    int n,m,s,i;
+    int x,y;
+    int graph[1001][1001] = {0};
+    int visit[1001] = {0};
+    int* g = &graph;
+    int* v = &visit;
+
+    scanf("%d %d %d", &n,&m,&s);
+    for (i =1; i< m+1; i++)
+    {
+        scanf("%d %d", &x,&y);
+        graph[x][y] = 1;
+        graph[y][x] = 1;
+    }
+    visit[-1] = s;    
+    dfs(g,v,s);
+    return 0;
+}
