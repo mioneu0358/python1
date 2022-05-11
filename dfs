@@ -2,19 +2,22 @@
 
 n, m, v = map(int, input().split())
 graph = [[0] * (n+1) for _ in range(n+1)]
-visited = [0] * (n+1)
+visit = []
 
 for _ in range(m):
   x, y = map(int, input().split())
   graph[x][y] = graph[y][x] = 1
 
-def dfs(graph, i, visited):
-  visited[i] = 1
-  print(i, end=' ')
-  for j in range(len(graph[i])):
-    if graph[i][j] == 1 and not visited[j]:
-      dfs(graph, j, visited)
-dfs(graph, v, visited)
+visit.append(v)   
+def dfs(visit, graph, idx):
+  for j in range(len(graph[idx])):
+    if j not in visit and graph[idx][j] == 1:
+      visit.append(j)
+      dfs(visit,graph,j)
+  return visit
+
+visit = dfs(visit, graph, v)
+print(visit)
 
 
 
