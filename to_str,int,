@@ -1,0 +1,95 @@
+class HangulNumber:
+    def __init__(self,hangul_num = "영"):
+        self.hangul_num = hangul_num
+
+    def __int__(self):
+        num = ""
+        for hnum in self.hangul_num:
+            if hnum == '영':
+                num += "0"
+            elif hnum == '일':
+                num += "1"
+            elif hnum == '이':
+                num += "2"
+            elif hnum == '삼':
+                num += "3"
+            elif hnum == '사':
+                num += "4"
+            elif hnum == '오':
+                num += "5"
+            elif hnum == '육':
+                num += '6'
+            elif hnum == '칠':
+                num += '7'
+            elif hnum == '팔':
+                num += '8'
+            elif hnum == '구':
+                num += '9'
+            else:
+                raise ValueError(self.hangul_num + "은 정수로 변환할 수 없습니다.")
+        return int(num)
+
+
+    def __float__(self):
+        num = ""
+        for hnum in self.hangul_num:
+            if hnum == '영':
+                num += "0"
+            elif hnum == '일':
+                num += "1"
+            elif hnum == '이':
+                num += "2"
+            elif hnum == '삼':
+                num += "3"
+            elif hnum == '사':
+                num += "4"
+            elif hnum == '오':
+                num += "5"
+            elif hnum == '육':
+                num += '6'
+            elif hnum == '칠':
+                num += '7'
+            elif hnum == '팔':
+                num += '8'
+            elif hnum == '구':
+                num += '9'
+            elif hnum == '점':
+                num += '.'
+            else:
+                raise ValueError(self.hangul_num + "은 실수로 변환할 수 없습니다.")
+        return float(num)
+
+
+
+
+
+    # def __floor__(self):
+    #     num = map(HangulNumber, self.hangul_num.split("점")) #=>[HangulNum("삼"), HangulNumber("일사일오구이")]
+    #     num = ''.join(list(map(lambda x: str(int(x),num))))
+    #
+    #     return float(num)
+kor_num = HangulNumber("삼점일사일오구이")#한글로 숫자입력
+normal_num = float(kor_num)#만들어진 객체를 int함수에 넘김(내부적으로 __int__호출)
+print(normal_num,type(normal_num))
+
+
+class IntegerToHangul:
+    def __init__(self,int_num = 0):
+        self.int_num = int_num
+
+    def __str__(self):
+        str_num = ''
+        kor_set = ['영','일','이','삼','사','오','육','칠','팔','구']
+        num = self.int_num
+        kor = ''
+        while num:
+            kor += kor_set[num%10] + kor
+            num //= 10
+        return str_num
+
+
+
+
+normal_num = IntegerToHangul(12345)
+kor_num = str(normal_num)
+print(kor_num)
