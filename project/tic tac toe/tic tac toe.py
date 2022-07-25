@@ -1,7 +1,7 @@
-from game import disp_board
-from game import victory
-from game import Draw
-from game import log_in
+from function import disp_board
+from function import victory
+from function import Draw
+from function import log_in
 import random
 
 #로그인
