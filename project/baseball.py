@@ -1,18 +1,27 @@
+'''BASEBALL GAME RULE'''
+
+""" 
+Rule1: 무작위 정수 3개를 정답으로 선언한다.(단, 중복은 없도록)
+Rule2: 매 턴 마다 정수 3개를 입력하고 비교한다.
+Rule3: 입력한 수가 존재하며, 자리도 같다면 STRIKE
+       존재는 하지만 자리가 다르면 BALL
+Rule4: 총 10회 안에 문제를 맞혀야 하며, 턴이 0이 되면 종료
+"""
+
+
 import random
 
-cnt = 10  #시도횟수
-answer = [] #정답을 받아줄 변수
-while len(answer) <= 2 :    #중복되지 않은 3개의 수를 랜덤으로 넣어준다.
+cnt = 10
+answer = []
+while len(answer) <= 2 :
     num = random.randint(0,9)
     if num not in answer:
-        answer.append(num)  
-        
-print(answer)
+        answer.append(num)
 
-ball = 0    #ball count
-strike = 0  #strike cout
+ball = 0
+strike = 0
 while True:
-    result = list(map(int,input("숫자 3개를 입력하시오: ").split()))   #수 3개를 입력받는 리스트
+    result = list(map(int,input("숫자 3개를 입력하시오: ").split()))
     print()
     cnt -= 1
     print("남은 기회 %d" % cnt)
