@@ -1,0 +1,168 @@
+# # 최단 거리 알고리즘
+# # 최대 힙(Max Heap)과 최소 힙(Min Heap) 자료구조
+# # 최소 힙 구현
+# # 1. 트리의 인덱스를 1부터 출발(루트의 인덱스 = 1, 왼쪽 자식의 인덱스 = 루트 인덱스 * 2, 오른쪽 자식의 인덱스 = 루트 인덱스 * 2 + 1
+#
+# class MiniHeap:
+#     def __init__(self):
+#         self.tree = [float('-inf')]
+#
+#     def insert(self,data):
+#         # 1. 제일 마지막 터미널 노드에 데이터 삽입, 터미널 노드 = 자식 노드가 없는 가장 낮은 레이어의 노드
+#
+#         self.tree.append(data)
+#
+#         # 2. 삽입 노드와 부모 노드 비교 및 교환
+#         idx = len(self.tree) -1 # 삽입 노드의 인덱스
+#         while self.tree[idx//2] > self.tree[idx]:
+#             self.tree[idx], self.tree[idx//2] = self.tree[idx//2], self.tree[idx]
+#             idx //= 2
+#
+#     def delete(self):
+#         # 트리가 비어있는 경우 None 리턴
+#         if len(self.tree) == 1:
+#             return None
+#         # 1. 루트 노드의 값을 저장
+#         data = self.tree[1]
+#
+#         #2. 가장 마지막 터미널 노드의 값을 루트 노드에 복사
+#         self.tree[1] = self.tree[-1]
+#         self.tree.pop()
+#
+#         #3. 루트 노드부터 출발하여 자식과 비교해 더 작은 자식들과 위치를 교환
+#         idx = 1 #현재 노드의 인덱스
+#         while True:
+#             #왼쪽 자식 노드의 인덱스
+#             c_idx = idx * 2
+#             # 오른쪽 자식 노드가 존재하면서 더 작으면 오른쪽 자식 노드 선택
+#             if c_idx +1 < len(self.tree):
+#                 if self.tree[c_idx] > self.tree[c_idx +1]:
+#                     c_idx += 1
+#
+#             # 인덱스 범위가 벗어나거나 자식보다 부모가 더 작으면 멈춤
+#             if c_idx >= len(self.tree) or self.tree[c_idx] > self.tree[idx]:
+#                 break
+#             # 선택한 자식 노드와 현재 노드 교환
+#             self.tree[idx], self.tree[c_idx] = self.tree[c_idx], self.tree[idx]
+#             idx = c_idx
+#
+#         # 마지막으로 데이터 반환
+#         return data
+#
+# test = MiniHeap()
+#
+# input_data = [1,3,5,7,9,2,4,6]
+# for n in [1,3,5,7,9,2,4,6]:
+#     test.insert(n)
+# print(test.tree)
+#
+#
+# ouput_data = []
+# for _ in input_data:
+#     ouput_data.append(test.delete())
+# print(ouput_data)
+
+
+import heapq
+# 2575 백준 힙 관련 문제
+
+
+# # 다익스트라 알고리즘(Dijkstra Algorithm)
+# 음의 가중치(weight)가 없는 그래프의 한 정점에서 모든 정ㅁ점까지 의 최단거리를 각각 구하는 알고리즘이다. 에츠허르다익스트라가 고안한 알고리즘이며,
+# 처음 고안된 알고리즘은 O(v2)의 시간 복잡도를 가졌다. 이후 우선순위 큐 등을 이용한 더욱 개선디ㅗㄴ 알고리즘이 나오며o(v + E)logV의 시간 복잡도를 가지게 된다.
+# 다익스트라 알고리즘은 흔히 인공위성 gps소프트웨어에서 등에서 가장 많이 사용된다.
+# 현실세계에서는 음의 가중치를 가지는 산선을 존재하지 않기 때문에 현실세계에서 사용하기 매우 적합한 알고리즘이다.
+# 1. 최단거리 테이블 초기화, 방문표시 테이블 초기화
+# 2. 출발노드설정
+# 3. 출발도드를 기준으로 각 노드의 최소비용저장
+# 4. 방문하지 안흔은 노드중 가장 비용이 적은 노드를 선택
+# 5. 출발노드->선택ㄴ드를 거쳐 가는 경우를 고려하여 최소비용갱신
+# 6. 모든 노드를 방문할때까지 4,5반복
+
+# import heapq
+# # 다익스트라 알고리즘 함수
+# # matrix : 가중치 인접 행렬
+# # start : 시작 노드
+# def dijkstra(matrix, start) :
+#     # 1. 최단 거기 테이블 초기화, 방문표시 테이블 초기환
+#     distance = [float('inf') for _ in range(len(matrix))]
+#     visit = [False for _ in range(len(matrix))]
+#
+#     # 우선순위 큐(최소힙) 준비
+#     pq = []
+#     # 2. 출발 노드 설정(간선 가중치와 노드 번호를 가팅 넣어준다.)
+#     heapq.heappush(pq, (0, start))
+#
+#     distance[start] = 0
+#
+#     while pq:
+#         # 3. 방문하지 않는 가장 비용이 적은 node 를 선택
+#         cost,node = heapq.heappop(pq)
+#         # 만약 이미 처리된 노드라면 넘어감
+#         if visit[node]:
+#             continue
+#         visit[node] = True
+#
+#         # 4. 출발 노드 -> 선택 노드를 거쳐 가는 경우를 고려하여 최소 비용 갱신
+#         for i in range(len(matrix[node])):
+#             if distance[i] > matrix[node][i] + cost:
+#                 distance[i] = matrix[node][i] + cost
+#                 heapq.heappush(pq,(distance[i] ,i))
+#
+#     return distance
+#
+# inf = float('inf')
+# # 도달할수 없다 즉, 간선이 없다는 것을 inf로 표현
+# amatrix = [
+#     [0,3,4,inf,inf,inf],
+#     [3,0,inf,inf,8,inf],
+#     [4,inf,0,1,10,inf],
+#     [inf,inf,1,0,inf,2],
+#     [inf,8,10,inf,0,inf],
+#     [inf,6,inf,2,inf,0]
+# ]
+# dist = dijkstra(amatrix,0)
+# print(dist)
+
+
+
+# 백준 1753 최단경로 
+import sys
+input = sys.stdin.readline
+
+V, E = map(int,input().split())
+
+start = int(input())
+matrix= []
+
+for _ in range(E):
+    u,v,w = map(int,input().split())
+    matrix[u] = (v,w)
+
+import heapq
+# 1. 최단 거리 테이블 초기화, 방문표시 테이블 초기환
+distance = [float('inf')] * (V +1)
+visit = [False] * (V + 1)
+
+# 우선순위 큐(최소힙) 준비
+pq = []
+# 2. 출발 노드 설정(간선 가중치와 노드 번호를 같이 넣어준다.)
+heapq.heappush(pq, (0, start))
+
+distance[start] = 0
+
+while pq:
+    # 3. 방문하지 않는 가장 비용이 적은 node 를 선택
+    cost,node = heapq.heappop(pq)
+    # 만약 이미 처리된 노드라면 넘어감
+    if visit[node]:
+        continue
+    visit[node] = True
+
+    # 4. 출발 노드 -> 선택 노드를 거쳐 가는 경우를 고려하여 최소 비용 갱신
+    for n_node, n_cost in matrix[node]:
+        if distance[n_node] > n_cost + cost:
+            distance[n_node] = n_cost + cost
+            heapq.heappush(pq,(distance[n_node], n_node))
+for i in distance[1:]:
+    print(i if i < float('inf') else 'INF')
