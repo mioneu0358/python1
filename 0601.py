@@ -1,0 +1,128 @@
+# #abs(x) = absolute = 숫자의 절대값을 돌려준다. 객체가 __abs__메서드를 구현하는 경우 그에 대한 리턴값을 돌려준다.
+#
+#
+# # print("1의 절대값:", abs(1)) #출력값 => 1
+# # print("-3의 절대값 : ", abs(-3)) #출력값 => 3
+# # print("-0.5의 절대값 : " ,abs(-0.5))# 출력값 => 0.5
+#
+#
+#
+# #List를 상속하는  My list클래스 작성
+# class Mylist(list):
+#     def __init__(self, seq = ()):
+#         super().__init__(seq)     #부모클래스의 __init__을 사용한다.
+#
+#
+#     def __abs__(self):
+#         absList = Mylist()
+#         #"숫자"만 abs를 적용하여 새로운 리스트 생성
+#         for i in self:
+#             if type(i) in (int,float):
+#                 absList.append(abs(i))
+#             else:
+#                 absList.append(i)
+#         return absList
+#
+# mylist = Mylist([-1,2,-3,'4'])
+# print(abs(mylist)) # [1,3,2,'4']
+#
+
+
+#max(iterable, *[,key, dafalult])
+#max(arg1,arg2,*args[,key]) min도 동일
+#1. 입력받은 iterable(반복가능)객체중 제일 큰 값 리턴
+#2. 입력받은 인자값 중 제일 큰 값 리턴
+#min은 위의 반대
+
+#
+# print(max(1,2,3,4)) #출력값 => 4
+# print(max([1,3,"4"])) #오류 발생(TypeError) - 문자와 숫자의 크기비교가 불가
+# print(max(3)) # 오류발생(TypeError) - 인자값이 하나만 올 경우 itterable객체로 판단
+# print(max([3])) #출력값 => 3
+# print(max([])) # ValueError
+# print(max([],default = 0))
+# print(max([1,9],[4,7])) #리스트의 0번쨰 값을 비교하여 더 큰 값을 리턴
+# print(max([1,9],[4,7],key=lambda x:x[1])) # 리스트의 1번쨰 값을 비교하여 더 큰 값으 리턴
+# print(max([1,9],[4,7],key=lambda x: sum(x))) #리스트안의 값들을 모두 더한것이 큰 값을 리턴
+# print(max("abcdefg")) #출력값 => g
+# print(max("a","A")) # 출력값 => a
+
+
+
+# sum(iterable,start =0)
+# iterable 항목들을 왼쪽에서 오른쪽으로 향하고 합계를 리턴한다.
+# start 값은 시작값을 넘길 수 있다. (시작값은 문자열이 될수 없다.)
+
+# print(sum([1,2,3])) #출력값 => 6
+# print(sum((1, 2, 3))) #출력값 => 6
+# print(sum(range(4))) #출력값 => 6
+
+# print(sum([1,2,3],start = 6)) # 출력값 => 12
+# print(sum(["1","2","3"])) #TypeError => start = 0인데 문자열을 더해주고있다
+# print("".join(["1","2","3"])) #출력값 => "123"
+
+
+# pow(base, exp[,mod])   mod(modulo == %)
+# base의 exp 거듭제곱
+# mod 값을 전달하는 경우 생성된 결과에 해당 값으로 나머지 연산을 처리해준다
+# print(pow(3,3)) # 출력값 -> 27
+# print(pow(1.5,0.5))  #출력값 ->1.224744871391589
+# print(pow(1.224744871391589,2)) #출력값  => 1.4999999999999998 1.5의 근사치
+# print(pow(3,3,mod = 3)) #출력값 => 0 = (3*3*3) % 3
+# print(3**3 ==  pow(3,3))  #출력값 => True
+
+
+
+#round(number, [,ndigits]) = number의 소수점 ndights 자리에서 반올림 값을 리턴
+# print(round(30)) #출력값 => 30
+# print(round(30.1)) #출력값 => 30
+# print(round(30.5)) #출력값 => 30 부동소수점을 포현할 때에 생기는 오차로 인해
+# print(round(30.6)) #출력값 => 31
+# print(1/3) #출력값 => 0.33333333333333
+# print(round(12.651,1)) #출력값 => 12.7
+# print(round(12.656, 2)) #출력값 => 12.66
+# def solution(s):
+#     answer = []
+#     x = s[1:-1]
+#     x = x.replace("{","")
+#     print(x)
+#     part = []
+#     idx = 0
+#     while x:
+#         if x[idx].isdigit():
+#             part.append(x.pop(idx))
+#         elif x[idx] == '}':
+#             answer.append(part)
+#             idx = 0
+#         idx += 1
+#         print(x)
+#
+#
+
+def parseSet(s:str):
+    s = s[1:-1]
+    s = s.replace(",{",' ').replace("}","").replace("{","")
+    s = s.split(" ")
+    slist = []
+    for sl in s:
+        slist.append(set(map(int, sl.split(","))))
+    slist.sort(key = lambda x: len(x))
+
+    return slist
+def solution(s):
+
+    sl = parseSet(s)    #문자열 집합을 집합 리스트로 만듬
+    print(sl)
+    temp = sl[0]        #튜플의 첫번째 집합이 됨
+    answer = [sl[0]]    #정답 리스트
+    for i in range(1,len(sl)):
+        answer.append(sl[i]-temp)
+        temp = sl[i]
+
+    for i in range(len(answer)):
+        answer[i] = answer[i].pop()
+
+    return answer
+
+s = "{{1,2,3},{2,1},{1,2,4,3},{2}}"
+print(solution(s))
