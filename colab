@@ -1,0 +1,137 @@
+"""
+Pytorch 를 이용해 Data loader 를 만든다.
+"""
+from torch.utils.data import Dataset
+from torchvision import transforms
+from glob import glob
+import torch
+import cv2
+
+class LoadDataset(Dataset):
+    # 데이터 초기화 시켜주는 작업
+    def __init__(self, dir_path):
+        # 데이터 경로를 적어준다.
+        self.img_list = glob(dir_path + "/*.png")
+
+    # 경로를 통해서 실제 데이터의 접근을 해서 데이터를 돌려주는 함수
+    def __getitem__(self, index):
+        # 여기서 실제로 output을 뱉어 준다. 
+        img_path = self.img_list[index]
+        image = cv2.imread(img_path) #BGR -> RGB ~~~
+
+        name = img_path.split('/')[-2] '~~~ mask/test/1.png'
+
+        if name == 'mask':
+          label = 0
+        else:
+          label = 1
+        return image, label
+    # 데이터의 전체 길이를 구하는 함수
+    def __len__(self):
+        return len(self.img_list)
+
+# Dataset -> Dataloader
+train_dataset = LoadDataset('/contetn/lakdsfjalskfdj/sdaflkjkl')
+
+# Dataloader
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=2, shuffle=True)
+
+#포커
+
+
+for image, label in train_loader:
+  print(image.shape, label)
+  # 2, 3, h, w 
+
+from torchvision.models import resnet50, ResNet50_Weights
+
+
+
+# def get_data_loader(args):
+#     #train, validation -> val
+    
+#     temp_trans = transforms.Compose([transforms.RandomHorizontalFlip(),
+#                                          transforms.ToTensor(),
+#                                          transforms.Normalize(mean=[0.485, 0.456, 0.406],
+#                                                               std=[0.229, 0.224, 0.225])])
+    
+#     train_dataset = LoadDataset('./train_path')
+#     val_dataset = LoadDataset('./val_path')
+
+    
+#     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
+#     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
+
+#     return train_loader, val_loader
+
+----
+# train_loader, val_laoder = get_data_loader(None)
+
+# # enumerate 는 list 의 있는 내용을 순서를 매기면서 프린트를 한다.
+# for i, (images, labels) in enumerate(train_loader):
+#     print(labels, images.shape)
+----
+"""
+Pytorch 를 이용해 Data loader 를 만든다.
+"""
+from torch.utils.data.dataset import Dataset
+from torchvision import transforms
+import pandas as pd
+import numpy as np
+from PIL import Image
+import torch
+from torchvision import datasets
+
+class NkDataSet(Dataset):
+    # 데이터 초기화 시켜주는 작업
+    def __init__(self, file_path):
+
+        self.trans = transforms.Compose([transforms.RandomHorizontalFlip(),
+                                         transforms.ToTensor(),
+                                         transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                                              std=[0.229, 0.224, 0.225])])
+        self.data_info = pd.read_csv(file_path, header=None)
+        # asarray is convert the input to an array
+        self.image_arr = np.asarray(self.data_info.iloc[:, 0][1:])
+        self.label_arr = np.asarray(self.data_info.iloc[:, 1][1:])
+
+        self.label_arr = torch.from_numpy(self.label_arr)
+        self.data_len = len(self.data_info.index)
+
+    # 경로를 통해서 실제 데이터의 접근을 해서 데이터를 돌려주는 함수
+    def __getitem__(self, index):
+
+        img_name = self.image_arr[index]
+        img_as_img = Image.open(img_name)
+        img_as_tensor = self.trans(img_as_img)
+        img_label = self.label_arr[index]
+
+        return img_as_tensor, img_label
+
+    # 데이터의 전체 길이를 구하는 함수
+    def __len__(self):
+        return self.data_len
+
+print("s")
+def get_data_loader(args):
+    #train, validation -> val
+    
+    temp_trans = transforms.Compose([transforms.RandomHorizontalFlip(),
+                                         transforms.ToTensor(),
+                                         transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                                              std=[0.229, 0.224, 0.225])])
+
+    train_dataset = datasets.ImageFolder(train_path,transform=temp_trans)
+    val_dataset = datasets.ImageFolder(val_path,transform=temp_trans)
+
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
+
+    return train_loader, val_loader
+
+# csv 의 경로를 설정해 줘야 한다.
+train_loader, val_laoder = get_data_loader(None)
+
+# enumerate 는 list 의 있는 내용을 순서를 매기면서 프린트를 한다.
+for i, (images, labels) in enumerate(train_loader):
+    print(labels, images.shape)
