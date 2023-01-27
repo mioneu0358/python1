@@ -1,0 +1,33 @@
+import tkinter as tk
+보조개 = 'ddd'
+def 보조개a():
+    global 보조개
+    보조개 = 'a'
+def 보조개A():
+    global 보조개
+    보조개 = 'A'
+def print_보조개():
+    print(보조개)
+
+window = tk.Tk()       # 기본 윈도우 객채 생성
+
+window.title("Test")    # 메인창 타이틀
+window.geometry("640x640+100+100")
+window.resizable(True,True)
+bg = tk.PhotoImage(name="face.jpg",height=250,width=100)
+label = tk.Label(window,text = "hello world",image=bg)
+
+
+
+
+btn1 = tk.Button(window,text="우성",width=5,height = 2,command = 보조개a )
+btn2 = tk.Button(window,text="열성",width=5,height = 2,command = 보조개A )
+btn3 = tk.Button(window,text="출력",width=5,height = 2,command = print_보조개)
+
+
+label.place(x=0,y=0)
+btn1.place(x = 15, y = 10)
+btn2.place(x = 60, y = 10)
+btn3.place(x = 45, y = 100)
+
+window.mainloop() # 화면을 계속 유지하는 함수
