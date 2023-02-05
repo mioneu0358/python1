@@ -5,6 +5,7 @@
 
 from functions import *
 
+
 # 게임 실행 순서
 # ------- 1. 로그인 -------
 cnt = 0
@@ -41,15 +42,13 @@ while True:
 
 board = ['*'] * 9
 
-
 display_board(board)
 
 
 # 게임 실행
 while True:
-
-# TODO:3. 보드판에 플레이어가 선택한 문양을 입력(위치선택)
-# 3-1 이미 입력된 자리일 경우 다시 입력받는다.input_pos()를 사용해서 위치 가져오기
+# 3-1 이미 입력된 자리일 경우 다시 입력받는다.input_pos()를
+# 사용해서 위치 가져오기
     pos = input_pos(board)
     board[pos] = player
 
@@ -59,13 +58,24 @@ while True:
     if victory(board,player):
         print("Player Win!")
         exit()
-
-
+    if DRAW(board):
+        print("무승부")
+        exit()
 # 5. 컴퓨터가 랜덤한 자리에 문양 입력
 # 5-1 이미 입력된 자리일 경우 다시 자리를 구한다.
 # import random 후에 random.randint()사용
+    pos = random_pos(board)
+    board[pos] = computer
     display_board(board)
+
 # 6. victory(board, computer)를 사용해서 우승조건 판별
 # 6-1 우승 조건: 한 줄 빙고
+    if victory(board, computer):
+        print("Computer Win!")
+        exit()
+
+
+
+
 
 # 3~6은 우승 조건이 나오기 전까지 or 무승부 조건이 되기 전까지 반복
