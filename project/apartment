@@ -1,0 +1,87 @@
+import random
+def make_apartment(층:int,호:int):
+    apartment = []
+    for i in range(1,층+1):
+        floor = []
+        for j in range(1,호+1):
+            floor.append(str(i*100+j)+'호')
+        apartment.append(floor)
+    return apartment
+
+def make_info(층:int, 호:int):
+    info = []
+    for i in range(층):
+        temp = []
+        for j in range(호):
+            temp.append(str(random.randint(0,5)) + '명')
+        info.append(temp)
+    return info
+
+def make_apart_info(apartment,info):
+    apart_info = []
+    for i in range(len(apartment)):
+        temp = {}
+        for j in range(len(apartment[i])):
+            temp[apartment[i][j]] = info[i][j]
+        apart_info.append(temp)
+    return apart_info
+
+
+def make_new_info(층, 호,cnt):
+    new_info = []
+    while len(new_info) < cnt:
+        new_ho = str(random.randint(1,층)* 100 + random.randint(1,호))+'호'
+        if new_ho not in new_info:
+            new_info.append(new_ho)
+
+    for i in range(len(new_info)):
+        new_info[i] = [new_info[i],str(random.randint(0,5))+'명']
+    return new_info
+
+def update_info(apart_info,new_info):
+    for f, i in new_info:
+        floor = int(f[:-3])
+        apart_info[floor-1][f] = i
+    return apart_info
+
+
+# 아파트 문제
+# 호수는 1부터 99까지 들어온다.
+층 = int(input())    #   3
+호 = int(input())    #   4
+
+# apartment 만들기
+apartment = make_apartment(층,호)
+print(f"apartment\n{apartment}")
+
+# info만들기
+info = make_info(층,호)
+print(f"info\n{info}")
+
+# apartment와 info를 이용해서 apartment_info 만들기
+apartment_info = make_apart_info(apartment,info)
+print(f"apartment_info\n{apartment_info}")
+
+# TODO: new_info가 주어졌을때 apart_info를 최신화 하시오.
+new_info = make_new_info(층,호,4)
+print(f"new_info\n{new_info}")
+
+apartment_info = update_info(apartment_info,new_info)
+print(f"apartment_info\n{apartment_info}")
+
+
+
+
+
+# #apart_info
+# [{'101호': '1명', '102호': '0명', '103호': '3명', '104호': '0명'},
+#  {'201호': '0명', '202호': '2명', '203호': '4명', '204호': '1명'},
+#  {'301호': '0명', '302호': '3명', '303호': '5명', '304호': '2명'}]
+#
+# #new_info
+# [['203호', '2명'], ['101호', '3명'], ['104호', '4명'], ['304호', '5명']]
+#
+# # apart_info
+# [{'101호': '3명', '102호': '0명', '103호': '3명', '104호': '4명'},
+#  {'201호': '0명', '202호': '2명', '203호': '2명', '204호': '1명'},
+#  {'301호': '0명', '302호': '3명', '303호': '5명', '304호': '5명'}]
