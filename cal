@@ -2,68 +2,66 @@ from tkinter import *
 from tkinter.ttk import *
 from QuadraticEquation import *
 
-#메인창 만들기
-root = Tk()
-
-root.title('Calculater')
-root.geometry('380x240')
-
-#Frame
-frm = Frame(root)
-frm.pack(expand = True)
-
-text_y = Message(frm,text='y = ',font = '맑은고딕 10')
-text_y.grid(column=0,row=0,sticky='wens')
-
-ent_A = Entry(frm,font = '맑은고딕 15',width=20)
-ent_A.grid(column = 1, row = 0, padx=20, sticky = 'wens')
-
-# ent_A.insert(0,'y = a + bx + c')
-text_A = Message(frm,text = 'x² + ')
-text_A.grid(column = 2,row = 0,sticky='wens')
-
-ent_B = Entry(frm,font = "맑은고딕 15",width=20)
-ent_B.grid(column = 3, row = 0, padx=20,sticky = 'wens')
-
-text_B = Message(frm,text = 'x + ')
-text_B.grid(column = 4, row = 0, sticky = 'wens')
-
-ent_C = Entry(frm,font = "맑은고딕 15",width=20)
-ent_C.grid(column = 5, row = 0,padx=10, sticky = 'wens')
-
-text_C = Message(frm,text = '= ')
-text_C.grid(column = 6, row = 0, sticky = 'wens')
-
-
-#Button
-
-btn_cal = Button(frm,text = '계산하기')
-btn_cal.anchor('ne')
-
-btn_draw = Button(frm,text = '그래프로 보기')
-btn_draw.anchor('nw')
-
-
-# 정환쌤 코드
 def get_result():
-    A = ent_A.get()
-    B = ent_B.get()
-    C = ent_C.get()
+    A = int(ent_A.get())
+    B = int(ent_B.get())
+    C = int(ent_C.get())
     if not A or not B or not C:
         return
 
     result = solution(A,B,C)
+    ent_result.delete(0,'end')
+    ent_result.insert(0,result)
 
 
 
+#메인창 만들기
+root = Tk()
+
+root.title('Calculater')
+root.geometry('700x300')
+
+#Frame
 
 
-#Button act
+text_y = Message(text='y = ')
+text_y.place(x = 20, y = 50, width=40, height = 100)
+text_y.configure(font = ('맑은고딕',17))
 
+ent_A = Entry(font = '맑은고딕 20')
+ent_A.place(x = 60, y = 70, width=50, height = 50)
 
-btn_cal.configure()
-btn_draw.configure()
+# ent_A.insert(0,'y = a + bx + c')
+text_A = Message(text = 'x² + ')
+text_A.place(x = 110, y = 50,width=50, height = 100)
+text_A.configure(font = ('맑은고딕',17))
 
+ent_B = Entry(font = "맑은고딕 20")
+ent_B.place(x = 170, y = 70,width=50, height = 50)
+
+text_B = Message(text = 'x + ')
+text_B.place(x = 220, y = 50,width=50, height = 100)
+text_B.configure(font = ('맑은고딕',17))
+
+ent_C = Entry(font = "맑은고딕 20")
+ent_C.place(x = 280, y = 70,width=50, height = 50)
+
+text_C = Message(text = '= ')
+text_C.place(x = 330, y = 50,width=50, height = 100)
+text_C.configure(font = ('맑은고딕',17))
+
+ent_result = Entry(font = '맑은고딕 20')
+ent_result.place(x = 380, y = 70 , width=270, height = 50)
+
+#Button
+
+btn_cal = Button(text = '계산하기')
+btn_cal.place(x = 100 ,y = 150 ,width= 150, height = 70)
+btn_cal.configure(command= get_result)
+
+btn_draw = Button(text = '그래프로 보기')
+btn_draw.place(x = 400 ,y = 150 ,width= 150, height = 70)
+btn_draw.configure(command=draw_graph)
 
 
 
