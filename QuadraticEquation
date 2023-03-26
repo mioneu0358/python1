@@ -16,12 +16,12 @@ def solution(a, b, c):
         if b ** 2 - 4 * a * c > 0:
             x1 = (-b + math.sqrt(b ** 2 - 4 * a * c)) / 2 * a
             x2 = (-b - math.sqrt(b ** 2 - 4 * a * c)) / 2 * a
-            return f"{a}*X**2 + {b}*X + {c} =  (x {-round(x1)})(x {-round(x2)}"
+            return f"(x {-round(x1)})(x {-round(x2)})"
 
         # 해가 1개인 경우
         elif b ** 2 - 4 * a * c == 0:
             x1 = (-b + math.sqrt(b ** 2 - 4 * a * c)) / 2 * a
-            return f"{a}*X**2 + {b}*X + {c} =  (x {-round(x1)}) ** 2"
+            return f"(x {-round(x1)}) ** 2"
 
         # 해가 없는 경우
         elif b ** 2 - 4 * a * c < 0:
@@ -34,9 +34,10 @@ def solution(a, b, c):
 
 
 # 2차 방정식 그래프 그리기
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
-def draw_graph():
+def draw_graph(y,a,b,c):
     x = np.array(range(-10,11))
     print(f"x = {x}")
 
@@ -44,7 +45,7 @@ def draw_graph():
     plt.ylabel('y axis')
 
 
-    plt.plot(x,x**2-3*x-15,label = 'y = x*82 - 3*x - 15')
+    plt.plot(x,a*x**2+b*x-c-y,label = f'{y} = {a}x² + {b}x + {c}')
     plt.legend()
     plt.show()
 # 보고소 요약
