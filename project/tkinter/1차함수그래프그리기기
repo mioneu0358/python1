@@ -1,0 +1,161 @@
+from tkinter import *
+from tkinter.font import *
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
+
+window = Tk()
+
+window.geometry('1250x600+200+200')
+window.resizable(1,1)
+window.title('1차함수 그래프 그리기')
+# Frame 설정
+frame0 = Frame(width=500, height = 70, relief='solid', bd = 3)
+frame1 = Frame(width=450, height=400,relief='solid', bd = 2)
+frame2 = Frame(width=700, height=400,relief='solid', bd = 2)
+
+frame0.place(x =30, y = 0)
+frame1.place(x=30,y = 100)
+frame2.place(x=500,y = 100)
+
+
+font= Font(family="맑은 고딕", size=20, slant="italic")
+
+label_title = Label(window, text="1차 함수 그래프 그리기", font=font)
+label_title.place(x = 100, y =10)
+
+# 첫번째 1차함수
+textY = Message(frame1,text = 'y =', font = font)
+entA = Entry(frame1,font = font )
+textX = Message(frame1,text = 'x + ', font = font)
+entB = Entry(frame1,font = font)
+
+# 두번빼 2차 함수
+textY2 = Message(frame1,text = 'y =', font = font)
+entA2= Entry(frame1,font = font)
+textX2 = Message(frame1,text = 'x +', font = font)
+entB2 = Entry(frame1,font = font)
+
+# 버튼 만들기
+btn_draw1 = Button(frame1,text = "그래프 그리기")
+btn_draw2 = Button(frame1,text = "비교하기")
+
+#
+# fig = Figure(figsize=(6,3),)
+#
+# axis = fig.add_subplot(111) #1열, 1컬럼
+
+# #데이터를 셋팅
+# x = [1, 2, 3, 4, 5]
+# y = [1, 4, 9, 16, 25]
+#
+# # 그래프를 그리기 위한 Figure 객체 생성
+# fig = Figure(figsize=(5, 4), dpi=100)
+# fig.add_subplot(111).plot(x, y)
+#
+# # Figure 객체를 Canvas에 추가
+# canvas = FigureCanvasTkAgg(fig, master=window)
+# canvas.draw()
+# canvas.get_tk_widget().pack(frame2,side=TOP, fill=BOTH, expand=1)
+#
+# window.update()
+# window.deiconify()
+
+
+
+
+
+# 위치 잡기
+# 첫번째 함수
+textY.place(x = 40, y = 80, width=70 , height=100)
+entA.place(x = 100, y =  100, width= 50, height = 50)
+textX.place(x = 130, y = 80, width = 70, height = 100)
+entB.place(x = 200, y =  100, width= 50, height= 50)
+# 두번째 함수
+textY2.place(x = 40, y = 160, width=70 , height=100)
+entA2.place(x = 100, y =  180, width= 50, height = 50)
+textX2.place(x = 130, y = 160, width = 70, height = 100)
+entB2.place(x = 200, y =  180, width= 50, height= 50)
+
+btn_draw1.place(x = 300 ,  y = 100, width= 100, height =  50)
+btn_draw2.place(x = 300 ,  y = 180, width= 100, height =  50)
+
+
+# 동작
+entA.insert(0,'A')
+entB.insert(0,'B')
+entA2.insert(0,"A'")
+entB2.insert(0,"B'")
+
+
+def get_entry1():
+    a = entA.get()
+    b = entB.get()
+    if a == '':
+        return 'A를 입력해주세요'
+    elif a == '0':
+        return 'A는 0이 될 수 없습니다.'
+
+    if b == '':
+        b = 0
+    return int(a), int(b)
+
+
+def get_entry2():
+    a = entA2.get()
+    b = entB2.get()
+    if a == '':
+        return 'A를 입력해주세요'
+    elif a == '0':
+        return 'A는 0이 될 수 없습니다.'
+
+    if b == '':
+        b = 0
+    return int(a), int(b)
+
+def draw_graph():
+    a,b = get_entry1()
+    x = np.array(range(-20,21))
+
+    y = a*x + b
+    plt.grid(color = '0.8')
+
+    plt.xlabel('x axis')
+    plt.ylabel('y axis')
+
+    label = f"y = {a}x"
+    if b:
+        if b > 0:
+            label += f' + {b}'
+        else:
+            label += f" - {-b}"
+    plt.plot(x,y,label = label)
+    plt.legend()
+    plt.show()
+
+def draw_graph2():
+    a2,b2 = get_entry2()
+    x = np.array(range(-20,21))
+    y2 = a2 * x + b2
+
+    label = f"y = {a2}x"
+    if b2:
+        if b2 > 0:
+            label += f' + {b2}'
+        else:
+            label += f" - {b2}"
+
+    plt.grid(color = '0.8')
+
+    plt.plot(x,y2,'r-',label = label)
+    plt.show()
+
+
+btn_draw1.configure(command = draw_graph)
+btn_draw2.configure(command = draw_graph2)
+
+
+
+window.mainloop()
