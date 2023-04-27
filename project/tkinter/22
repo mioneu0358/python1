@@ -1,0 +1,145 @@
+import tkinter as tk
+from tkinter.font import *
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
+
+import numpy as np
+
+def draw_graph():
+    # 입력된 함수식을 가져와 계산하기
+    func = func_entry.get()
+    arr = []
+    num = ''
+    for f in func:
+        if f.isdigit():
+            num += f
+        elif num:
+            arr.append(int(num))
+    a,b =arr
+    x = np.array(range(-20,21))
+    y = a*x+b
+
+    # 그래프 그리기
+
+    ax.plot(x, y)
+
+    # 그래프 출력하기
+
+
+# tkinter 창 생성
+window = tk.Tk()
+window.title("1차함수 그래프")
+window.geometry('600x600')
+font= Font(family="맑은 고딕", size=15)
+# 프레임
+frame = tk.Frame(window)
+frame.grid(row = 0, column=0, columnspan=3)
+
+#그래프 기본창
+fig = Figure(figsize=(5, 4), dpi=100)
+ax= fig.add_subplot(111)
+ax.set_xlim([-20,20])
+ax.set_ylim([-20,20])
+ax.spines['bottom'].set_position(('data',0))
+ax.spines['left'].set_position(('data', 0))
+
+
+ax.grid(color = '0.8')
+canvas = FigureCanvasTkAgg(fig, master=frame)
+canvas.draw()
+canvas.get_tk_widget().grid(row=2, column=0, columnspan=3)
+
+
+
+
+# 함수 입력창 생성
+func_label = tk.Label(window, text="1차함수 입력: ",font = font)
+func_label.grid(row=1, column=0)
+func_entry = tk.Entry(window,font = font)
+func_entry.grid(row=1, column=1)
+
+
+X2 = tk.Label(window,text = 'x계수 변화량 : ',font = font)
+X2.grid(row = 2, column=0,padx=20)
+entA2= tk.Entry(window,font = font,width=10)
+entA2.grid(row=2, column=1,padx=20)
+Y2 = tk.Label(window,text = 'y절편 변화량 : ',font = font)
+Y2.grid(row=3, column=0,padx=20)
+entB2 = tk.Entry(window,font = font, width=10)
+entB2.grid(row=3, column=1,padx=20)
+
+
+
+
+
+# 그래프 그리기 버튼 생성
+draw_button = tk.Button(window, text="그래프 그리기" ,font = font,command=draw_graph)
+draw_button.grid(row=1, column=2,padx=20)
+compare_button = tk.Button(window,text = "비교하기", font = font, )
+compare_button.grid(row=2, column=2,rowspan=2 ,padx=20)
+
+
+
+frame2 = tk.Frame(window)
+frame2.grid(row=4, column=0, columnspan=4)
+
+
+nothing = tk.Label(frame2,text = '',width= 4,  relief="solid")
+nothing.grid(row=4, column = 0,  sticky='wens')
+before = tk.Label(frame2,text = "변경 전",  relief="solid")
+before.grid(row=4,column=1,columnspan=9,  sticky='wens')
+strX = tk.Label(frame2,text = 'X값',width = 4,  relief="solid")
+strX.grid(row = 5, column= 0,  sticky = 'wens')
+
+rangeX = list(range(-20,21,5))
+X1 = tk.Label(frame2, text = '1', width = 4,relief="solid")
+X2 = tk.Label(frame2, text = '2', width = 4,relief="solid")
+X3 = tk.Label(frame2, text = '3', width = 4,relief="solid")
+X4 = tk.Label(frame2, text = '4', width = 4,relief="solid")
+X5 = tk.Label(frame2, text = '5', width = 4,relief="solid")
+X6 = tk.Label(frame2, text = '6', width = 4,relief="solid")
+X7 = tk.Label(frame2, text = '7', width = 4,relief="solid")
+X8 = tk.Label(frame2, text = '8', width = 4,relief="solid")
+X9 = tk.Label(frame2, text = '9', width = 4,relief="solid")
+
+X1.grid(row=5, column = 1, sticky='wens')
+X2.grid(row=5, column = 2, sticky='wens')
+X3.grid(row=5, column = 3, sticky='wens')
+X4.grid(row=5, column = 4, sticky='wens')
+X5.grid(row=5, column = 5, sticky='wens')
+X6.grid(row=5, column = 6, sticky='wens')
+X7.grid(row=5, column = 7, sticky='wens')
+X8.grid(row=5, column = 8, sticky='wens')
+X9.grid(row=5, column = 9, sticky='wens')
+
+resultY = [0] * 9
+strY = tk.Label(frame2, text = 'Y값', width = 4,relief="solid")
+Y1 = tk.Label(frame2, text = '', width = 4,relief="solid")
+Y2 = tk.Label(frame2, text = '', width = 4,relief="solid")
+Y3 = tk.Label(frame2, text = '', width = 4,relief="solid")
+Y4 = tk.Label(frame2, text = '', width = 4,relief="solid")
+Y5 = tk.Label(frame2, text = '', width = 4,relief="solid")
+Y6 = tk.Label(frame2, text = '', width = 4,relief="solid")
+Y7 = tk.Label(frame2, text = '', width = 4,relief="solid")
+Y8 = tk.Label(frame2, text = '', width = 4,relief="solid")
+Y9 = tk.Label(frame2, text = '', width = 4,relief="solid")
+
+strY.grid(row = 6, column=0, sticky='wens')
+Y1.grid(row=6, column = 1, sticky='wens')
+Y2.grid(row=6, column = 2, sticky='wens')
+Y3.grid(row=6, column = 3, sticky='wens')
+Y4.grid(row=6, column = 4, sticky='wens')
+Y5.grid(row=6, column = 5, sticky='wens')
+Y6.grid(row=6, column = 6, sticky='wens')
+Y7.grid(row=6, column = 7, sticky='wens')
+Y8.grid(row=6, column = 8, sticky='wens')
+Y9.grid(row=6, column = 9, sticky='wens')
+
+
+
+
+
+
+
+
+window.mainloop()
