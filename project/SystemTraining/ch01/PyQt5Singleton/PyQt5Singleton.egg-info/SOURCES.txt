@@ -1,0 +1,9 @@
+LICENSE
+README.md
+setup.py
+PyQt5Singleton/__init__.py
+PyQt5Singleton.egg-info/PKG-INFO
+PyQt5Singleton.egg-info/SOURCES.txt
+PyQt5Singleton.egg-info/dependency_links.txt
+PyQt5Singleton.egg-info/requires.txt
+PyQt5Singleton.egg-info/top_level.txt
