@@ -13,16 +13,6 @@
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <widget class="QComboBox" name="list_box">
-   <property name="geometry">
-    <rect>
-     <x>520</x>
-     <y>20</y>
-     <width>171</width>
-     <height>31</height>
-    </rect>
-   </property>
-  </widget>
   <widget class="QTextEdit" name="cal_entry">
    <property name="geometry">
     <rect>
@@ -50,7 +40,7 @@ p, li { white-space: pre-wrap; }
    <property name="geometry">
     <rect>
      <x>530</x>
-     <y>570</y>
+     <y>580</y>
      <width>131</width>
      <height>51</height>
     </rect>
@@ -62,10 +52,10 @@ p, li { white-space: pre-wrap; }
   <widget class="QWidget" name="formLayoutWidget">
    <property name="geometry">
     <rect>
-     <x>40</x>
-     <y>90</y>
-     <width>631</width>
-     <height>471</height>
+     <x>30</x>
+     <y>20</y>
+     <width>661</width>
+     <height>541</height>
     </rect>
    </property>
    <layout class="QFormLayout" name="graph_layout"/>
