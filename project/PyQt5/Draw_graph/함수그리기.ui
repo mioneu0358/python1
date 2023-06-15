@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog</class>
+ <widget class="QDialog" name="Dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>744</width>
+    <height>683</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <widget class="QComboBox" name="list_box">
+   <property name="geometry">
+    <rect>
+     <x>520</x>
+     <y>20</y>
+     <width>171</width>
+     <height>31</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QTextEdit" name="cal_entry">
+   <property name="geometry">
+    <rect>
+     <x>40</x>
+     <y>570</y>
+     <width>421</width>
+     <height>41</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QGraphicsView" name="viewer">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>60</y>
+     <width>701</width>
+     <height>481</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="draw_btn">
+   <property name="geometry">
+    <rect>
+     <x>490</x>
+     <y>570</y>
+     <width>131</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Draw Graph</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
