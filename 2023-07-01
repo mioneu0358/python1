@@ -1,0 +1,239 @@
+# 일급객체(first-class object)
+# 프로그래밍언어에서 특정한 조건을 충족하는 객채를 의미
+# 1.1급객체는 변수에 할당할 수 있어야하며 참조할 수있다.
+# def say_hello():
+#   print("Hello")
+# func = say_hello      # 함수 이름을 넘겨주는 행위 == 메모리상의 참조를 넘겨주었다
+# func()
+#  2. 함수의 인자로 전달할 수 있어야한다.
+# def func2(func)
+#   func()
+# 3. 반환값으로 사용할 수있어야한다.
+#  def get_func():
+#      def say_hello():
+#           print("Hello)
+#      return say_hello
+# func = get_func()     #함수를 반환받음
+# func()
+# # func은 get_func()의 결과값인 함수를 반환받았고, 그 함수는 메모리 공간에 올라가있다.
+# # 메모리공간은 더이상 참조하지 않는 변수나 함수를
+#
+#  4. 동적으로 속성이나 메서드를 추가할 수 있어야한다
+# def say_hello():
+#     print("hello")
+# say_hello.custom_property = "Custom Property"
+# print(say_hello.custom_property)
+#
+#
+# 호출 될 때마다 증가된 값을 리턴하는 함수 counter를 구현하시오
+# def counter():
+#     if not hasattr(counter,"cnt"):
+#         counter.cnt = 0
+#     counter.cnt += 1
+#     return counter.cnt
+
+# print(counter())
+# print(counter())
+# print(counter())
+# hasattr(객채,찾는프로퍼티이름:str) => 있으면 True/없으면 False
+#
+#
+# 중첩함수(Nested Function)
+# 중첩함수: 하나의 함수 내부에 다른 함수를 정의하는것을 말한다. 즉함수안에함수가정의되는 형태, 중첩함수는 코드의구조를 모듈화하고 코드를 더 깔끔하고 읽기 쉽게 만드는데 도움이 된다.
+# 특징:1.외부함수영역접근-중첩함수는 외부함수이ㅡ 변수에접근할 수있다. 이는 중첩함수가 외부함수의 변수를 읽거나 수정할 수있다.
+#     2. 클로저형성
+#     3. 내부함수의반환 -외부함수는 종종 내부에정의된 중첩함수를 반환한다. 이렇게 반환된 중첩함수는 외부함수의 변수를 참조하며.외부함수가 실행을 마친후에도 그 변수의 값에 접근할수있다.
+# def outer(x):
+#     def inner(y):
+#         return x+y
+#     return inner
+# closure = outer(10)
+# result = closure(5)
+# print(result)
+#-------------------------------------------------------------------------------------------
+# def outer():
+#     x = 0
+#     def inner():
+#         x = 10      # inner안에 x가 없기에 x=10은 외부함수 x의 값을 참조하는것이아니라 내부함수 inner의 지역변수 x를 생성한다
+#     inner()
+#     print(x)
+# outer()
+
+# nonlocal 키워드 : 위 문제를 해결하기 위해 말 그대로 비 지역을 의미한다.
+# def outer():
+#     x = 0
+#     def inner():
+#         nonlocal x      # x라는 변수는 비지역변수임을 알림 => 함수 외부에서 x를 찾는다
+#         x = 10
+#     inner()
+#     print(x)
+# outer()
+#-------------------------------------------------------------------------------------------
+#
+#
+# 외부함수인 make_counter(start)를 통해 내부 중첩함수인 counter()를 반환해보자
+# def make_counter(start):
+#     def counter():
+#         nonlocal start
+#         if not hasattr(counter,'start'):
+#             counter.start = start
+#         else:
+#             counter.start += 1
+#         return counter.start
+#     return counter
+## 정환썜 코드
+# def make_counter(start):
+#     cnt = start -1
+#     def counter():
+#         nonlocal cnt
+#         cnt += 1
+#         return cnt
+#     return counter
+# counter1 = make_counter(4)
+
+
+# print(counter1()) # 4
+# print(counter1()) # 5
+# print(counter1()) # 6
+#
+# counter2 = make_counter(1)
+# print(counter2())   # 1
+# print(counter2())   # 2
+
+# 렉시컬 스코프(Lexical Scope)
+# 렉시컬 스코프는 프로그램에서 변수와 식별자의 유효범위를 결정하는 방식, 코드를 작성하는 시점에서 변수가 어떤 스코프에 속하는지 알 수있으므로 실행시점에 변수의 스코프를 추적하는 추가적인 비용이 필요하지 않다.
+# 정적스코프결정: 변수의 유효범위가 변수가 소스코드에서 선언된 위치에 의해 결정되는 스코프의 개념
+# 변수의 스코프는 변수가 선언된 위치와 함수의 중첯ㅂ구조에의해 결정된다.
+# 스코프체인: 변수가 사용되는 시점에서 해당변수를 찾기위해 ㅡ코프체인을 따라 올라가며 변수를 탐색한다.
+# 단계:
+# 1. 지역스코프탐색: 변수가 사용 또는 선언된함수 또는 블록내부를 탐색
+# 2. 외부함수의 스코프탐색: 지역스코프에서 변수를 찾지못한경우 외부함수의 스코프를 탐색한다.함수가 중첩되어있는경우 중첩함수는 외부함수의스코프에접근
+# 3. 전역스코프:외부함수에서도 찾지못한경우 전역스코프를탐색
+# 4. 내장스코프탐색: 전역까지도 없다면 내장스코프를 탐색한다. 내장스코프는 파이썬에 이미 내장되어있는 함수와 객체들이 속하는범위를말한다
+# 5. 예외발생: 위 순서대로 탐색해도 찾지 못한경우 NameError발생
+# #
+# x = 10
+# def outer():
+#     x = 20  #inner의기준 외부함수스코프
+#     def inner1():
+#         print('inner1 x',x) #지역스코프에 x가 없기때문에 외부함수스코프의 x를 탐색
+#     def inner2():
+#         x = 30
+#         print('inner2 x',x) #x에 쓰기를 수행하는 경우 x느ㅡㄴ 지역스코프에서 생성되며 외부함수스코프의 x와는 다른 x가생성됨
+#     inner1()
+#     inner2()
+# outer()
+# print('global x',x) # 전역스코프에서 탐색 => 10
+#
+#
+#
+# 클로저(Closure)
+# 클로저는 함수와 해당함수가 참조하는 비지역변수들로 구성된 객체를 의미 중첩함수에서 외부함수의변수에접근할수있는메커니즘을 클로저라고한다.
+# 클로저를사용하면 외부함수의 변수가 내부함수의 스코프에 계속유지되고 내부함수가 외부함수를 벗어난후에도 접근할수있다.
+# 클로저는 비지역변수를 보호하고,데이터은닉과 캡슐화를 구현하는데 사용된다.즉 내부함수는 외부함수의 변수에대한 닫힌(closed)환경을 제공받을수있다
+# 데이터 은닉과 캡슐화는 객체지향프로그래밍에서 중요한개념이다. 이들은데이터와관련된접근과변경을제어함으로써코드의안정성과유지보수성을높이는데도움을주는기법이다.
+#
+# 합성함수
+# ex) f(x) = x**2 , g(x) = x+1
+# h(x) = f(g(x)) = x**2 + 2x + 1
+# h(5) = 36
+#
+# def compose(f,g):
+#     def wrapper(x):
+#         return f(g(x))
+#     return wrapper
+# def f(x):
+#     return x++2
+# def g(x):
+#     return x+1
+# h = compose(f,g)
+# print(h(5))
+#
+#
+# 메모이제이션(Memoization)
+# fibonacci(n) = (n-1) + (n-2)  단 f(1) = 1, f(2) = 1
+# def fibonacci(n):
+#     if n ==1 or n == 2: return 1
+#     return fibonacci(n-1) + fibonacci(n-2)
+# print(fibonacci(100))   # 재귀 횟수 초과
+
+# def fib():
+#     cache = {1:1,2:1}
+#     def calculate(n):
+#         if n in cache:
+#             return cache[n]
+#         cache[n] = calculate(n-1) + calculate(n-2)
+#         return cache[n]
+#     return calculate
+# f = fib()
+# print(f(250))
+#
+#--------------------------------------------------------------------------------
+#
+# 파셜 어플리케이션(Partial application)
+# def make_partial(func,fix = ()):
+#     def partial(*inputs):
+#         i = 0
+#         arg_list = []
+#         for fixed_arg in fix:
+#             if fixed_arg is not None:
+#                 arg_list.append(fixed_arg)
+#             else:
+#                 arg_list.append(inputs[i])
+#             i += 1
+#         return func(*arg_list)
+#     return partial
+# def pow(x,n):
+#     return x ** n
+# square = make_partial(pow,(None,2))
+# print(square(2))    # 4
+#
+# sqrt = make_partial(pow,(None,0.5))
+# print(sqrt(2))  # 1.4142135623730951
+#
+# cubicroot = make_partial(pow,(None,1/3))
+# print(cubicroot(2))
+#
+# 커링(Currying)
+# 커링은 파셜어플리케이션과비슷한개념이지만 약간의차이가있다. 커링은함수를여러개의인자를 받는대신,하나의인자만받는함수들의연속으로변환하는기법이다.
+def currying(func):
+    # 입력함수의파라미터개수가져오기
+    papram_len = len(func.__code__.co_varnames)
+
+    def curried(*args):
+        if len(args) != papram_len:
+            return func(*args)
+        else:
+            return lambda *next_args : curried(*(args + next_args))
+    return curried
+
+def multiply(x,y,z):
+    return x * y * z
+
+curried_multiply = currying(multiply)
+print(curried_multiply(2),(3),(4))
+print(curried_multiply(2,3),(4))
+print(curried_multiply(2),(3,4))
+print(curried_multiply(2,3,4))
+
+
+#
+#
+#
+#
+# #
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+# ##
+
+
+# ##
