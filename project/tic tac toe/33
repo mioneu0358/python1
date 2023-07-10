@@ -1,0 +1,23 @@
+# Main
+from functions import *
+board = ['*'] * 9   # 보드의 초기값
+
+player,computer = input_OX()
+print(player,computer)
+# functions
+# 보드 출력 함수,OX문양입력함수,승리조건확인함수, 좌표입력함수,
+# 컴퓨터좌표생성함수, 무승부함수,
+def input_OX():
+    if input("O와 X중에 고르시오: ") in ['O','o']:
+        return ('O','X')
+    return ('X','O')
+
+def display_board(board):
+    for i in range(3):
+        print('-------------')
+        print(f"| {board[i*3]} | {board[i*3+1]} | {board[i*3+2]} |")
+    print('-------------')
+if __name__ == "__main__":
+    board = ['0','1','2','3','4','5','6','7','8']
+    # display_board(board)
+    print(input_OX())   # O 입력시 => (O, X)
