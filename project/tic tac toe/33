@@ -1,23 +1,42 @@
 # Main
 from functions import *
 board = ['*'] * 9   # 보드의 초기값
+cnt = 3
+while True:
+    cnt -= 1
+    if cnt == 0:
+        print("시도횟수를 초과하였습니다.")
+        exit()
+    input_id = input("아이디를 입력해주세요: ")
+    input_pw = input("비밀번호를 입력해주세요")
+    if log_in(input_id,input_pw):
+        print(f"{input_id}님 로그인 되었습니다.")
+        break
+
 
 player,computer = input_OX()
-print(player,computer)
-# functions
-# 보드 출력 함수,OX문양입력함수,승리조건확인함수, 좌표입력함수,
-# 컴퓨터좌표생성함수, 무승부함수,
-def input_OX():
-    if input("O와 X중에 고르시오: ") in ['O','o']:
-        return ('O','X')
-    return ('X','O')
+display_board(board)
+#------------------- 게임 시작 ----------------------
+while True:
+    # 1. 플레이어가 놓을 좌표를 입력한다.
+    pos = input_pos(board)
+    # 2. 해당 자리에 플레이어의 문양을 놓고, 보드를 보여준다
+    board[pos] = player
+    display_board(board)
+    # 3. 플레이어가 승리조건에 해당하는지 확인한다.
+    if victory(player,board):
+        print("Player Win")
+        exit()
+    if draw(board):
+        print("Draw")
+        exit()
 
-def display_board(board):
-    for i in range(3):
-        print('-------------')
-        print(f"| {board[i*3]} | {board[i*3+1]} | {board[i*3+2]} |")
-    print('-------------')
-if __name__ == "__main__":
-    board = ['0','1','2','3','4','5','6','7','8']
-    # display_board(board)
-    print(input_OX())   # O 입력시 => (O, X)
+    # 4. 컴퓨터는 좌표를 입력받지 않고 난수를 이용해서 좌표를 생성한다.
+    pos = random_pos(board)
+    # 5. 해당자리에 컴퓨터 문양을 놓고, 보드를 보여준다.
+    board[pos] = computer
+    display_board(board)
+    # 6. 컴퓨터가 이겼는지 확인
+    if victory(computer,board):
+        print("Computer Win")
+        exit()
