@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Audio Player</title>
+    <style>
+        .category-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Audio Player</h1>
+    <div class="category-container">
+        {% for category in categories %}
+        <div>
+            <h2>{{ category }}</h2>
+            <form action="/set_volume" method="POST">
+<!--                <input type="hidden" name="category" value="{{ category }}">-->
+                <label for="audio_file_{{ category }}">Audio File:</label>
+                <select id="audio_file_{{ category }}" name="audio_file">
+                    {% for file in audio_files_data %}
+                    <option value="{{ file.url }}">{{ file.name }}</option>
+                    {% endfor %}
+                </select>
+                <br><br>
+                <div id='result'>선택값: </div>
+                <audio id="audio_player_{{ category }}" controls>
+                    <source id="audio_source_{{ category }}" src="audio_source_{{ category }}" type="audio/mp3">
+                    Your browser does not support the audio element.
+                </audio>
+                <br><br>
+                <label for="volume_{{ category }}">Volume:</label>
+                <input type="range" id="volume_{{ category }}" name="volume" min="0" max="100" value="50">
+                <br><br>
+                <input type="submit" value="Save Volume">
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+    <br><br>
+    <form action="/get_volume" method="POST">
+        <label for="category_load">Category:</label>
+        <select id="category_load" name="category_load">
+            {% for category in categories %}
+            <option value="{{ category }}">{{ category }}</option>
+            {% endfor %}
+        </select>
+        <input type="submit" value="Load Volume">
+    </form>
+    <script>
+        // Audio file data for each category
+        const audioFiles = {
+            {% for category in categories %}
+            {{ category }}: [
+                {% for file in audio_files_data %}
+                { name: "{{ file.name }}", url: "{{ file.url }}" },
+                {% endfor %}
+            ],
+            {% endfor %}
+        };
+
+        // Update the audio player source when the audio file is changed
+        function updateAudioPlayer(category) {
+            const audioPlayer = document.getElementById(`audio_player_${category}`);
+            const audioSource = document.getElementById(`audio_source_${category}`);
+            const audioFileSelect = document.getElementById(`audio_file_${category}`);
+            const selectedFile = audioFiles[category][audioFileSelect.selectedIndex];
+            audioSource.src = selectedFile.url;
+            audioPlayer.load();
+        }
+
+        // Update audio file options when the category is changed
+        function updateAudioFileOptions() {
+            const category = this.value;
+            const audioFileSelect = document.getElementById(`audio_file_${category}`);
+            audioFileSelect.innerHTML = "";
+            audioFiles[category].forEach(function(file) {
+                const option = document.createElement("option");
+                option.value = file.url;
+                option.text = file.name;
+                audioFileSelect.appendChild(option);
+            });
+
+            // Update the audio player source with the first audio file
+            updateAudioPlayer(category);
+        }
+
+        // Add event listeners to the category selects
+        const categorySelects = document.querySelectorAll("[name=category]");
+        categorySelects.forEach(function(select) {
+            select.addEventListener("change", updateAudioFileOptions);
+        });
+
+        // Add event listeners to the audio file selects
+        const audioFileSelects = document.querySelectorAll("[name=audio_file]");
+        audioFileSelects.forEach(function(select) {
+            select.addEventListener("change", function() {
+                const category = this.form.elements.category.value;
+                console.log(this);
+                updateAudioPlayer(category);
+            });
+        });
+
+
+}
+    </script>
+</body>
+</html>
