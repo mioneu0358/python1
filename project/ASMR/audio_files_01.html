@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Audio Player</title>
+    <style>
+        .category-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Audio Player</h1>
+    <div class="category-container">
+        {% for category in categories %}
+        <div>
+            <h2>{{ category }}</h2>
+            <select name="file_id_{{category}}" id="audio_file_{{ category }}" onclick="updateAudioPlayer('{{ category }}')">
+                {% for audio_file in audio_files_data %}
+                    <option value="{{ audio_file.url }}">{{ audio_file.name }}</option>
+                {% endfor %}
+            </select>
+            <br><br>
+            <div id='result'>선택값: </div>
+            <audio id="audio_player_{{ category }}" controls>
+                <source id="audio_source_{{ category }}" src="" type="audio/mp3">
+                Your browser does not support the audio element.
+            </audio>
+            <br><br>
+            <label for="volume_{{ category }}">Volume:</label>
+            <input type="range" min="0" max="100" id="volume_{{ category }}" name="volume" onchange="VolumeChange('{{category}}')">
+            <form id="SubmitVolume_{{category}}">
+                 <td>
+                    <input type="hidden" value="{{ category }}" name="category">
+                    <input type="submit" value="Submit">
+                </td>
+            </form>
+
+        </div>
+
+
+        {% endfor %}
+    </div>
+    <br><br>
+    <form action="/get_volume" method="POST">
+        <label for="category_load">Category:</label>
+        <select id="category_load" name="category_load">
+            {% for category in categories %}
+                <option value="{{ category }}">{{ category }}</option>
+            {% endfor %}
+        </select>
+        <input type="submit" value="Load Volume">
+    </form>
+    <script>
+
+
+        // 카테고리별 오디오 파일 지정하기
+        function updateAudioPlayer(category) {
+            const audioPlayer = document.getElementById(`audio_player_${ category }`);
+            console.log(audioPlayer);
+            const audioSource = document.getElementById(`audio_file_${category}`);
+            console.log("audioSource",audioSource.value);
+            const audioFileSelect = document.getElementById(`audio_file_${category}`);
+
+            audioPlayer.src = audioSource.value;
+            console.log("audioPlayer.src",audioPlayer.src);
+            audioPlayer.load();
+        }
+
+
+        // 볼륨 조절 적용 함수
+        function VolumeChange(category) {
+            const volume = document.getElementById(`volume_${category}`);
+            const audio = document.getElementById(`audio_player_${category}`);
+            console.log("audio.volume:",audio.volume,"volume.value:",volume.value);
+            audio.volume = volume.value / 100;
+        }
+
+
+        //
+        const categories = [
+            {% for file in categories %}
+                {% set sanitized_name = category|replace(' ', '_')|replace('[^a-zA-Z0-9_]', '') %}
+                {% set sanitized_category = category|replace(' ', '_')|replace('[^a-zA-Z0-9_]', '') %}
+            "{{file}}",
+            {% endfor %}
+        ]
+        // 볼륨 저장
+        {% for file in categories %}
+                {% set sanitized_name = category|replace(' ', '_')|replace('[^a-zA-Z0-9_]', '') %}
+                {% set sanitized_category = category|replace(' ', '_')|replace('[^a-zA-Z0-9_]', '') %}
+            var submit_vol = document.getElementById(`SubmitVolume_`+`{{ file }}`);
+            submit_vol.addEventListener('submit', evt => {
+                evt.preventDefault();
+                const form = evt.target;
+                const audio = document.getElementById(`audio_player_`+`{{ file }}`);
+                console.log("F",form);
+                const body = JSON.stringify({
+                volume : audio.volume,
+                category: `{{ file }}`
+                });
+                fetch('/set_volume', {method:'post',body:body})
+        })
+        {% endfor %}
+
+
+
+
+
+
+
+
+
+    </script>
+</body>
+</html>
