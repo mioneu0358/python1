@@ -1,0 +1,148 @@
+# 데이터와 링크를 저장하는 클래스 Node
+class Node:
+    def __init__(self, data, link=None):
+        self.data = data
+        self.link = link
+
+
+# Node들을 관리하는 클래스 MyList
+class MyList:
+    def __init__(self, *datas):
+        self.length = 0
+        self.head = None
+        self.tail = None
+
+        for data in datas:
+            self.append(data)
+
+    # 노드를 생성하여 데이터를 연결
+    def append(self, data):
+        node = Node(data)
+
+        # 저장된 데이터가 없는 경우
+        if self.head is None:
+            self.head = node
+            self.tail = node
+        # 저장된 데이터가 있는 경우
+        else:
+            self.tail.link = node
+            self.tail = node
+
+        self.length += 1
+
+    # 출력할때 이쁘게 출력하기(str 재정의)
+    def __str__(self):
+        result = "<"
+        curr = self.head
+        while curr is not None:
+            result += str(curr.data)
+            if curr.link is not None:
+                result += ", "
+            curr = curr.link
+
+        result += ">"
+        return result
+
+    # 객체를 iterable 하게 만듦
+    def __iter__(self):
+        def generate():
+            curr = self.head
+            while curr is not None:
+                yield curr.data
+                curr = curr.link
+
+        return generate()
+
+    # 내장함수 len 호출시 동작 구현
+    def __len__(self):
+        return self.length
+
+    # 인덱싱 구현
+    def __getitem__(self, index):
+        if type(index) is not int:
+            raise IndexError('인덱스는 정수값이어야 합니다.')
+
+        if index < 0:
+            index = len(self) + index
+
+        if index >= len(self) or index < 0:
+            raise IndexError('인덱스가 범위를 초과했습니다.')
+
+        for idx, data in enumerate(self):
+            if idx == index:
+                return data
+
+    def __setitem__(self, index, value):
+        if type(index) is not int:
+            raise IndexError('인덱스는 정수값이어야 합니다.')
+
+        if index < 0:
+            index = len(self) + index
+
+        if index >= len(self) or index < 0:
+            raise IndexError('인덱스가 범위를 초과했습니다.')
+
+        curr = self.head
+        for _ in range(index):
+            curr = curr.link
+        curr.data = value
+
+    def pop(self, index=-1):
+        if type(index) is not int:
+            raise IndexError('인덱스는 정수값이어야 합니다.')
+
+        if index < 0:
+            index = len(self) + index
+
+        if index >= len(self) or index < 0:
+            raise IndexError('인덱스가 범위를 초과했습니다.')
+
+        # 원소가 하나인 경우
+        if len(self) == 1:
+            data = self.head.data  # 1. 첫번째 원소의 데이터를 가져옴
+            self.head = None  # 2. head와 tail의 링크를 끊는다.
+            self.tail = None
+            self.length = 0  # 3. length를 0으로 초기화
+            return data
+
+        # 첫번째 원소를 pop한 경우
+        if index == 0:
+            data = self.head.data  # 1. 첫번째 원소의 데이터를 가져옴
+            self.head = self.head.link  # 2. head가 첫번째 원소의 다음 링크를 가리키게 함
+            self.length -= 1  # 3. length를 1 감소
+            return data
+
+        # 마지막 원소를 pop하는 경우
+        if index == len(self) - 1:
+            data = self.tail.data  # 1. 마지막 원소의 데이터를 가져옴
+            curr = self.head  # 2. pop할 원소의 이전 원소를 찾음
+            for _ in range(index - 1):
+                curr = curr.link
+            curr.link = None  # 3. 이전 원소의 링크를 끊음 (마지막 원소로 향하는)
+            self.tail = curr  # 4. tail이 이전 원소를 가리키게 함
+            self.length -= 1  # 5. length를 1 감소
+            return data
+
+        # 그 외 중간 원소를 pop하는 경우
+        curr = self.head  # 1. pop할 중간 원소의 이전 원소를 찾음
+        for _ in range(index - 1):
+            curr = curr.link
+        data = curr.link.data  # 2. 이전 원소의 링크를 통해 중간 원소의 데이터를 가져옴
+        curr.link = curr.link.link  # 3. 이전 원소의 링크가 중간 원소의 다음 원소를 가리키게 함
+        self.length -= 1  # 4. length를 1 감소
+        return data
+
+    # 리스트를 내부적으로 역순 정렬
+    def reverse(self):
+
+        pass
+
+curr = 
+arr = [1, 2, 3, 4]
+for i in range (len(arr)):
+
+
+arr.reverse()
+reversed(arr)
+arr.pop()
+print(arr)
