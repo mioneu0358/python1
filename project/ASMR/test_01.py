@@ -2,26 +2,35 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify
 import os
 import pickle
 import json
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
-from google.auth.transport.requests import Request
+from google_auth_oauthlib.flow import InstalledAppFlow        # pip install google-auth-oauthlib
+from googleapiclient.discovery import build                   # pip install google-api-python-client
+from google.auth.transport.requests import Request            # pip install google-auth
 
 app = Flask(__name__)
 
-# Google OAuth 자격증명을 얻기 위한 함수
+VOLUME_FILE_PATH = "volume.txt"            # 볼륨값을 저장할 파일 이름
+
+# Initial data for the categories
+categories = {
+    "Rain Sound": 1,
+    "Insects Sound": 1,
+    "Crackling Fire": 1,
+    "Piano Music": 1,
+    "Ocean Waves": 1,
+    "Wind Sounds": 1,
+}
+
+
+# Google OAuth 자격증명을 얻기 위한 함수: 사용자가 확인 및 어플의 정보 사용범위 설정 및 권한부
 def get_credentials(google_id, password):
-    # Implement your authentication logic here
-    # You can use the provided Google ID and password to authenticate the user
-    # and retrieve the necessary OAuth credentials
+    
+    # 과정
+    # 1. 제공된 구글 아이디와 비밀번호 확인
+    # 2. 인증에 성공하면 OAuth 흐름 생성
+    # 3. 흐름을 실행하여 자격 증명을 얻습니다.
+    # 4. 성공하면 자격 증명 개체를 반환하고 그렇지 않으면 None을 반환합니다.
 
-    # Example implementation:
-    # 1. Validate the provided Google ID and password
-    # 2. If authentication is successful, create an OAuth flow
-    # 3. Run the flow to obtain credentials
-    # 4. Return the credentials object if successful, otherwise return None
-
-    # Example code:
-    if google_id == 'aliuveu' and password == '75fa2vheo!':
+    if google_id == 'google_id' and password == 'google_pw!':
         # Set up the OAuth flow
         flow = InstalledAppFlow.from_client_secrets_file('credentials.json', ['https://www.googleapis.com/auth/drive'])
         credentials = flow.run_local_server(port=0)
@@ -31,74 +40,52 @@ def get_credentials(google_id, password):
 
 # 저장된 자격증명을 불러오기 위한 함수
 def load_credentials():
-    # Implement your logic to load stored credentials
-    # Load the stored credentials from a database or file
-
-    # Example code:
+    # 현재 경로에 token.pickle이 존재하면 불러와서 return 
     if os.path.exists('token.pickle'):
         with open('token.pickle', 'rb') as token:
             credentials = pickle.load(token)
             return credentials
     else:
         return None
+        
 def get_audio_file_url(service, file_id):
     try:
-        # Make a request to the Drive API to get the file metadata
+        # file metadata(file의 속성정보)를 불러오기 위해 요청을 보낸다
         file_metadata = service.files().get(fileId=file_id, fields='webViewLink').execute()
         file_url = file_metadata.get('webViewLink', '')
         return file_url
     except Exception as e:
-        # Handle any potential errors that may occur while retrieving the file URL
         print(f"Error retrieving file URL: {e}")
         return None
+
+
 # Google Drive에서 오디오 파일을 검색하는 함수
 def get_audio_files(service):
-    # Implement your logic to retrieve audio files from Google Drive
-    # Use the provided service object to make requests to the Google Drive API
-    # Retrieve and process the audio files data
-    # Return a list of audio files
-
-    # Example code:
+    # 요청 
     results = service.files().list(q="mimeType='audio/mpeg'",
                                    pageSize=10,
                                    fields='files(id, name)').execute()
     files = results.get('files', [])
-    print("files",files)
-    # Create an empty dictionary to store the audio files by category
-    audio_files = []
+    audio_files = []        # 요청한 오디오 파일들의 이름과 경로를 담을 변수
 
     for file in files:
-        # Extract the category from the file name (e.g., "Rain Sound 1.mp3" -> "Rain Sound")
+        # Rain Sound.mp3" -> "Rain Sound"
         category = file['name'].split('.')[0]
-
-        # Check if the category already exists in the audio_files dictionary
         audio_files.append({
             'name': file['name'],
             'url': f"https://drive.google.com/uc?export=download&id={file['id']}"
         })
-    return audio_files
+    return audio_files    # [{'name': "Rain Sound",'url': "https://drive.google.com/uc?export=download&id=파일id}, ...]
 
-'''----------------------VOLUME-------------------------------------------'''
-VOLUME_FILE_PATH = "volume.txt"
-
-# Initial data for the categories
-categories = {
-    "Rain Sound": 50,
-    "Insects Sound": 50,
-    "Crackling Fire": 50,
-    "Piano Music": 50,
-    "Ocean Waves": 50,
-    "Wind Sounds": 50,
-}
 audio_files = []
 def update_volume_file():
-    # Write data to the volume.txt file
+    # w모드는 새로 쓰기를 의미 
     with open(VOLUME_FILE_PATH, "w") as f:
         for key, value in categories.items():
             f.write(f"{key}:{value}\n")
 
 def load_volume_file():
-    # Read data from the volume.txt file if it exists
+    # volume.txt가 존재하면 해당 파일 읽어 오기기
     if os.path.exists(VOLUME_FILE_PATH):
         with open(VOLUME_FILE_PATH, "r") as f:
             for line in f:
@@ -135,7 +122,6 @@ def load_volume_file():
 #
 #     return volume_data.get(category, '50')  # Return the default volume value '50' if not found in the database
 
-'''----------------------VOLUME-------------------------------------------'''
 
 
 
