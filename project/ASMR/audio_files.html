@@ -16,50 +16,38 @@
         {% for category in categories %}
         <div>
             <h2>{{ category }}</h2>
-                <form action="{{ url_for('play_audio', file_id='') }}" method="post">
-                    <select name="file_id_{{category}}" id="audio_file_{{ category }}" onclick="updateAudioPlayer('{{ category }}')">
-                        {% for audio_file in audio_files_data %}
-                            <option value="{{ audio_file.url }}">{{ audio_file.name }}</option>
-                        {% endfor %}
-                    </select>
-                    <br><br>
-                    <div id='result'>선택값: </div>
-                    <audio id="audio_player_{{ category }}" controls>
-                        <source id="audio_source_{{ category }}" src="" type="audio/mp3">
-                        Your browser does not support the audio element.
-                    </audio>
-                    <br><br>
-                    <label for="volume_{{ category }}">Volume:</label>
-                    <input type="range" id="volume_{{ category }}" name="volume" min="0" max="100" value="50">
-                    <br><br>
-                    <input type="submit" value="Save Volume">
-                </form>
+            <select name="file_id_{{category}}" id="audio_file_{{ category }}" onclick="updateAudioPlayer('{{ category }}')">
+                {% for audio_file in audio_files_data %}
+                    <option value="{{ audio_file.url }}">{{ audio_file.name }}</option>
+                {% endfor %}
+            </select>
+            <br><br>
+            <div id='result'>선택값: </div>
+            <audio id="audio_player_{{ category }}" controls>
+                <source id="audio_source_{{ category }}" src="" type="audio/mp3">
+                Your browser does not support the audio element.
+            </audio>
+            <br><br>
+            <label for="volume_{{ category }}">Volume:</label>
+            <input type="range" min="0" max="100" id="volume_{{ category }}" name="volume" onchange="VolumeChange('{{category}}')">
+            <form id="SubmitVolume_{{category}}">
+                 <td>
+                    <input type="hidden" value="{{ category }}" name="category">
+                    <input type="submit" value="Submit">
+                </td>
+            </form>
+
         </div>
+
+
         {% endfor %}
     </div>
     <br><br>
-    <form action="/get_volume" method="POST">
-        <label for="category_load">Category:</label>
-        <select id="category_load" name="category_load">
-            {% for category in categories %}
-                <option value="{{ category }}">{{ category }}</option>
-            {% endfor %}
-        </select>
-        <input type="submit" value="Load Volume">
-    </form>
+        <button id="getDataBtn">Load Volume</button>
     <script>
-        // Audio file data for each category
-        const audioFiles = {
-
-                {% for file in audio_files_data %}
-                    {% set sanitized_name = category|replace(' ', '_')|replace('[^a-zA-Z0-9_]', '') %}
-                    {% set sanitized_category = category|replace(' ', '_')|replace('[^a-zA-Z0-9_]', '') %}
-                "{{ file.name }}": "{{ file.url }}" ,
-                {% endfor %}
-            };
 
 
-        // Update the audio player source when the audio file is changed
+        // 카테고리별 오디오 파일 지정하기
         function updateAudioPlayer(category) {
             const audioPlayer = document.getElementById(`audio_player_${ category }`);
             console.log(audioPlayer);
@@ -72,36 +60,58 @@
             audioPlayer.load();
         }
 
-        // Update audio file options when the category is changed
-        function updateAudioFileOptions() {
-            const category = this.value;
-            const audioFileSelect = document.getElementById(`audio_file_${category}`);
-            audioFileSelect.innerHTML = "";
-            audioFiles[category].forEach(function(file) {
-                const option = document.createElement("option");
-                option.value = file.url;
-                option.text = file.name;
-                audioFileSelect.appendChild(option);
-            });
 
-            // Update the audio player source with the first audio file
-            updateAudioPlayer(category);
+        // 볼륨 조절 적용 함수
+        function VolumeChange(category) {
+            const volume = document.getElementById(`volume_${category}`);
+            const audio = document.getElementById(`audio_player_${category}`);
+            console.log("audio.volume:",audio.volume,"volume.value:",volume.value);
+            audio.volume = volume.value / 100;
         }
 
-        // Add event listeners to the category selects
-        const categorySelects = document.querySelectorAll("[name=category]");
-        categorySelects.forEach(function(select) {
-            select.addEventListener("change", updateAudioFileOptions);
-        });
 
-        // Add event listeners to the audio file selects
-        const audioFileSelects = document.querySelectorAll("[name=audio_file]");
-        audioFileSelects.forEach(function(select) {
-            select.addEventListener("change", function() {
-                const category = this.form.elements.category.value;
-                updateAudioPlayer(category);
+        //
+        const categories = [
+            {% for file in categories %}
+                {% set sanitized_name = category|replace(' ', '_')|replace('[^a-zA-Z0-9_]', '') %}
+                {% set sanitized_category = category|replace(' ', '_')|replace('[^a-zA-Z0-9_]', '') %}
+            "{{file}}",
+            {% endfor %}
+        ]
+        // 볼륨 저장
+        {% for file in categories %}
+                {% set sanitized_name = category|replace(' ', '_')|replace('[^a-zA-Z0-9_]', '') %}
+                {% set sanitized_category = category|replace(' ', '_')|replace('[^a-zA-Z0-9_]', '') %}
+            var submit_vol = document.getElementById(`SubmitVolume_`+`{{ file }}`);
+            submit_vol.addEventListener('submit', evt => {
+                evt.preventDefault();
+                const form = evt.target;
+                const audio = document.getElementById(`audio_player_`+`{{ file }}`);
+                console.log("F",form);
+                const body = JSON.stringify({
+                volume : audio.volume,
+                category: `{{ file }}`
+                });
+                fetch('/set_volume', {method:'post',body:body})
+        })
+        {% endfor %}
+
+
+        const getDataBtn = document.getElementById('getDataBtn');
+        getDataBtn.addEventListener('click', () => {
+          fetch('/get-data')
+            .then(response => response.json())
+            .then(Volumes => {
+              for (let[category,volume] of Object.entries(Volumes)) {
+              const audio = document.getElementById(`audio_player_${category}`);
+              audio.volume = volume;
+              }
+
             });
         });
+
+
+
 
     </script>
 </body>
