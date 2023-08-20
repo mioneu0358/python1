@@ -1,0 +1,65 @@
+import pygame
+from functions import *
+
+class Pyrain:
+    BLACK = (0, 0, 0)
+    WHITE = (255, 255, 255)
+    BLUE = (0, 0, 255)
+    GREEN = (0, 255, 0)
+    RED = (255, 0, 0)
+
+    def __init__(self):
+        pygame.init()
+
+        # 색상 설정
+
+        self.screen_size = [500, 700]
+        self.screen = pygame.display.set_mode(screen_size)
+
+        self.background = pygame.image.load("background.png")
+        self.pygame.display.set_caption("타자연습 산성비")
+
+        self.input_word = ""
+
+        self.run_status = True
+        self.clock = pygame.time.Clock()
+        self.FPS = 60  # FPS(Frame per Seconds)
+
+        # 타이머에 사용할 분,초,밀리초
+        self.minutes = 0
+        self.seconds = 0
+        self.millseconds = 0
+        self.game_font = pygame.font.SysFont('arial', 30, True, False)
+
+        total_time = 0
+        while run_status:
+            screen.blit(background, (0, 0))
+            millseconds += 1
+            timer = game_font.render("Timer: " + str(minutes) + ":" + str(seconds) + ":" + str(millseconds), True,
+                                     BLACK)
+            screen.blit(timer, (0, 0))
+            if millseconds >= 60:
+                seconds += 1
+                millseconds = 0
+                if seconds >= 60:
+                    minutes += 1
+                    seconds = 0
+            clock.tick(60)
+
+            # Main Event Loop
+            for event in pygame.event.get():
+                # 종료 창
+                if event.type == pygame.QUIT:
+                    run_status = False
+                # 키 입력 이벤트
+                if event.type == pygame.KEYDOWN:
+                    # 엔터키 입력시
+                    if event.key == pygame.K_RETURN:
+                        print(input_word)
+                        input_word = ""
+                    # 단어 입력
+                    else:
+                        input_word += event.unicode
+
+
+
