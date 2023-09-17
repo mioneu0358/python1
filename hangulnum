@@ -1,0 +1,66 @@
+# 한글로 된 숫자 변경하는 클래스
+class Hangul_Num:
+    def __init__(self, data):
+        if type(data) not in [int, str]:
+            raise TypeError("입력받을 데이터는 문자열이나 정수만 가능합니다.")
+        self.data = data
+
+    def __str__(self):
+        if type(self.data) == str:
+            return self.data
+
+        if self.data == 0:
+            return '영'
+        int_num = self.data
+        str_num = ""  # 리턴할 한글숫자
+
+        kor_digit = ['', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구']
+        parts = {1: '', 10: '십', 100: '백', 1000: '천'}
+        # 단위: 십 백 천
+        div = 1000
+        while int_num:
+            a = kor_digit[int_num // div]
+            if a != '일' or div == 1:
+                str_num += a
+            if a:
+                str_num += parts[div]
+            int_num %= div
+            div //= 10
+
+        return str_num
+
+    def __int__(self):
+        if type(self.data) == int:
+            return self.data
+        if self.data == '영':
+            return 0
+
+        str_num = self.data
+        int_num = 0                                      # return 할 값
+        digits = {'일': 1, '이': 2, '삼': 3, '사': 4, '오': 5, '육': 6, '칠': 7, '팔': 8, '구': 9}  # 한글->숫자
+        parts = {'십':10,'백':100,'천':1000}  # 단위: 십 백 천
+
+        n = 0       # 현재 자리수
+        p = 1       # 현재 단위
+        for num in str_num[::-1]:
+            # 자리값을 볼 때 => 자리값 수정
+            if num in digits:
+                n = digits[num]
+            # 단위를 볼 때 => 이전 계산값 누적 후 단위 수정
+            else:
+                # 십,백,천의 경우 n의 값이 0인 상태이므로 곱할수가 없어서 1로 변경
+                if n == 0 and p != 1:
+                    n = 1
+                int_num += n * p
+                n = 0
+                p = parts[num]
+        if n == 0:
+            n = 1
+        int_num += n * p
+
+        return int_num
+
+
+str_num = Hangul_Num("천백십일")
+print(int(str_num)) # 1213
+
