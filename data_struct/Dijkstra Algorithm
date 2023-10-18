@@ -133,11 +133,11 @@ input = sys.stdin.readline
 V, E = map(int,input().split())
 
 start = int(input())
-matrix= []
+matrix= [[] for _ in range(V+1)]
 
 for _ in range(E):
     u,v,w = map(int,input().split())
-    matrix[u] = (v,w)
+    matrix[u].append((v,w))
 
 import heapq
 # 1. 최단 거리 테이블 초기화, 방문표시 테이블 초기환
