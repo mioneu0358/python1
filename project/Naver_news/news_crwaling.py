@@ -1,6 +1,6 @@
 import os
 import sys
-
+from datetime import datetime
 import re
 # 정규 표현식 삭제(태그 지우기)
 def remove_tags(text):
@@ -42,9 +42,6 @@ for items in result['items']:
         links.append(items['originallink'])
         descriptions.append(items['description'])
 
-
-
-
 # # print(date)
 #
 toexcel = pd.DataFrame({
@@ -53,4 +50,5 @@ toexcel = pd.DataFrame({
         'link':links,
         'description': descriptions
 })
-toexcel.to_excel('장마.xlsx')
+now = datetime.now()
+toexcel.to_excel(f"{keyword}_{now.strftime('%Y%m%d')}2.xlsx")

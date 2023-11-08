@@ -53,7 +53,7 @@ for i in tqdm(final_urls,desc="기사 분류하는중: " ):
         title = news_html.select_one("#content > div.end_ct > div > h2")
 
     # 뉴스 본문 가져오기
-    content = news_html.select("div#dic_area")
+    content = news_html.select_one("#dic_area")
     if content == []:
         content = news_html.select("#articeBody")
 
@@ -69,7 +69,8 @@ for i in tqdm(final_urls,desc="기사 분류하는중: " ):
     # pattern2 = """[\n\n\n\n\n// flash 오류를 우회하기 위한 함수 추가\nfunction _flash_removeCallback() {}"""
     # content = content.replace(pattern2, '')
     news_titles.append(title)
-    news_contents.append(content)
+    news_contents.append(content.strip())
+
 
     # 날짜 가져오기
     try:
