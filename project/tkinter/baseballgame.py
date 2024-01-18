@@ -1,5 +1,5 @@
 import tkinter as tk
-import tkinter.font
+import tkinter.font as font
 import tkinter.messagebox as msBox
 import random
 
@@ -9,8 +9,8 @@ window = tk.Tk()
 window.title("baseball game")
 window.geometry("640x400+100+100")
 window.resizable(False,False)
-FONT = tk.font.Font(family="궁서체", size = 50)
-LISTBOX_FONT = tk.font.Font(family="궁서체", size=20)
+FONT = font.Font(family="궁서체", size = 50)
+LISTBOX_FONT = font.Font(family="궁서체", size=20)
 
 mainFrame = tk.Frame(window, width=620,height=370, relief= "solid",bd=2)
 mainFrame.pack(side="bottom",pady=10)
@@ -58,9 +58,12 @@ def restart():
 
 
 def get_entry(event):
-    print(event)
     global idx,try_cnt
     guess = ent_guess.get()
+    for g in guess:
+        if not (g.isdigit() or g.isspace()):
+            ent_guess.insert(0,"정수만 입력하시오.")
+            return
     if not guess:
         return
     try_cnt -= 1
