@@ -93,3 +93,35 @@ class DBAccess:
                 'content'        : result[i][2]
             }
         return result
+    
+    
+    def find_incident_by_name(self,name):
+        """
+        name값을 통해 카테고리를 찾는다.    
+        """
+        db = DBInterface()
+        db.connect()
+        
+        result = db.fetch_query(
+        """
+        SELECT incident_title,
+               date,
+               content,
+               name,
+        FROM KoreanHistory
+        WHERE date = ?
+        ORDER BY date
+        """, name)
+        
+        db.disconnect()
+        
+        if len(result) == 0:
+            return []
+        
+        for i in range(len(result)):
+            result[i] = {
+                'incident_title' : result[i][0],
+                'date'           : result[i][1],
+                'content'        : result[i][2]
+            }
+        return result

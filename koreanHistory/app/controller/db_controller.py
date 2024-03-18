@@ -10,3 +10,12 @@ def all_incident():
     return jsonify(incidents)
 
 
+@db_bp.route('/getdata', methods=['POST'])
+def getdata():
+    param = request.get_json()  # 요청 Body를 JSON형식으로 해석
+    print("================param=======================")
+    print(param)
+    
+    
+    return jsonify({"key": "values"})
+    

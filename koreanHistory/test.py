@@ -1,4 +1,11 @@
-def func(a,*args):
-    print(a, args)
+import tkinter as tk
 
-func(1)
+window = tk.Tk()
+
+window.title('show_mask')
+window.geometry("400x250+100+100")
+window.resizable(True,True)
+
+img = tk.PhotoImage(file=)
+
+window.mainloop()
