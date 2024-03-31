@@ -3,7 +3,6 @@ import json
 
 serviceKey = "msYRhJ6JOgdasigGM0PhgnBk3Cgm2oqEwEw90bD4dD9hqTzqMYU8w27FFzW59HzhWPFIuMUwGzA7pRJjqYgMBQ=="
 
-
 # 미세먼지 초 미세먼지 데이터를 가져올 함수
 def get_pm(area):
     convert_area = {'서울': 'seoul', '부산': 'busan', '대구': 'daegu', '인천': 'incheon',
@@ -42,6 +41,22 @@ def get_disease(area):
 
     return disease_data
 
+def get_avg(*args):
+    # 미세먼지: 0~30(좋음) 31~80(보통) 81~150(나쁨) 151이상(매우나쁨)
+    # 초미세먼지: 0~15(좋음) 16~50(보통) 51~100(나쁨) 101이상(매우나쁨)
+    standard = [[30,80,150],[15,50,100]]
+    total = args[-1]
+    for i in range(len(args)-1):
+        for j in range(len(standard[i])):
+            if args[i] <= standard[i][j]:
+                total += j
+                break
+        else:
+            total += 4
+    print(total / 3)
+    return round(total / 3)
+
+
 if __name__ == "__main__":
     print(get_pm("경기"))
-    get_disease('경기')
+    # get_disease('경기')
