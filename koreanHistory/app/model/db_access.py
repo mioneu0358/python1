@@ -4,124 +4,43 @@ class DBAccess:
     """
     게시판에 관련된 데이터에 접근하는 DataBase Access Object(DAO)
     """
-    
-    def find_all_incident():
-        """
-        모든 사건 반환
-        """
-        db = DBInterface
-        db.connect()
-        
-        result = db.fetch_query(
-        """
-        SELECT incident_title,
-               date,
-               content,
-               FROM KoreanHistory
-               ORDER BY date
-        """
-        )
-        db.disconnect()
-        
-        if len(result) == 0:
-            return []
-        
-        for i in range(len(result)):
-            result[i] = {
-                'incident_title' : result[i][0],
-                'date'           : result[i][1],
-                'content'        : result[i][2]
-            }
-        return result
-    
-    def find_incident_by_title(self, title):
-        """
-        title값을 통해 카테고리를 찾는다.    
+    def find_incident_by_category(self,king,year,content):
+        """_
+        조건을 통해 데이터를 찾는다.
         """
         db = DBInterface()
         db.connect()
-        
-        result = db.fetch_query(
-        """
-        SELECT incident_title,
-               date,
-               content,
-        FROM KoreanHistory
-        WHERE incident_title = ?
-        ORDER BY date
-        """, title)
-        
+        if year != 0:
+            result = db.fetch_query("""
+            SELECT DISTINCT king, year, content
+            FROM Goryeo
+            WHERE king like ? AND
+                  year = ? AND
+                  content like ?
+            ORDER BY year;
+            """, king,year, content)
+            print(f"result: {result}")
+        else:                                                    #  연도가 정해져 있지 않다면 모든 연도에서 검색
+            result = db.fetch_query("""
+                        SELECT DISTINCT king, year, content
+                        FROM Goryeo
+                        WHERE king like ? AND
+                              year >= ? AND
+                              content like ?
+                        ORDER BY year;
+                        """, king, year, content)
+            print(f"result: {result}")
+
         db.disconnect()
-        
+
         if len(result) == 0:
             return []
-        
+
         for i in range(len(result)):
             result[i] = {
-                'incident_title' : result[i][0],
-                'date'           : result[i][1],
-                'content'        : result[i][2]
+                'king': result[i][0],
+                'year': str(result[i][1]) + '년',
+                'content': result[i][2]
             }
         return result
-    
-    def find_incident_by_date(self, date):
-        """
-        title값을 통해 카테고리를 찾는다.    
-        """
-        db = DBInterface()
-        db.connect()
-        
-        result = db.fetch_query(
-        """
-        SELECT incident_title,
-               date,
-               content,
-        FROM KoreanHistory
-        WHERE date = ?
-        ORDER BY date
-        """, date)
-        
-        db.disconnect()
-        
-        if len(result) == 0:
-            return []
-        
-        for i in range(len(result)):
-            result[i] = {
-                'incident_title' : result[i][0],
-                'date'           : result[i][1],
-                'content'        : result[i][2]
-            }
-        return result
-    
-    
-    def find_incident_by_name(self,name):
-        """
-        name값을 통해 카테고리를 찾는다.    
-        """
-        db = DBInterface()
-        db.connect()
-        
-        result = db.fetch_query(
-        """
-        SELECT incident_title,
-               date,
-               content,
-               name,
-        FROM KoreanHistory
-        WHERE date = ?
-        ORDER BY date
-        """, name)
-        
-        db.disconnect()
-        
-        if len(result) == 0:
-            return []
-        
-        for i in range(len(result)):
-            result[i] = {
-                'incident_title' : result[i][0],
-                'date'           : result[i][1],
-                'content'        : result[i][2]
-            }
-        return result
+

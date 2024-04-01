@@ -1,5 +1,5 @@
 import sqlite3
-
+from get_data_for_db import *
 class DBInterface:
     """
     데이터베이스 연결, 쿼리 실행, 해제를 정의한 DB 인터페이스
@@ -30,8 +30,8 @@ class DBInterface:
         입력한 쿼리를 실행함 (결과값 반환 X)
         :param query: Query String
         """
-        print(f"query: {query}")
-        print(f"param: {param}")
+        # print(f"query: {query}")
+        # print(f"param: {param}")
         self.cursor.execute(query, param)  # 쿼리를 실행
         self.connection.commit()    # 데이터베이스에 반영
 
@@ -41,6 +41,8 @@ class DBInterface:
         :param query: Query String
         :return: Tuple[]
         """
+        print(f"query: {query}")
+        print(f"param: {param}")
         self.cursor.execute(query, param)
         return self.cursor.fetchall()
 
@@ -62,20 +64,28 @@ def initialize_once():
     # 테이블 생성
     db.execute_query(
         """
-        CREATE TABLE  IF NOT EXISTS KoreanHistory (
+        CREATE TABLE  IF NOT EXISTS Goryeo  (
             incident_id	        INTEGER PRIMARY KEY  AUTOINCREMENT ,   -- 사건 ID(기본키, 자동증가)
-            incident_title	    TEXT NOT NULL,                          -- 사건 이름(NULL 비허용) 
-            date	            DATETIME NOT NULL,                      -- 사건 연도(NULL 비허용)
+            king        	    TEXT NOT NULL,                          -- 왕(NULL 비허용) 
+            year	            INT NOT NULL,                      -- 사건 연도(NULL 비허용)
             content	            TEXT NOT NULL                           -- 사건 설명(NULL 비허용)
         )
         """ 
     )
-    
     # 생성된 스키마 확인
-    ret = db.fetch_query("SELECT * FROM sqlite_schema")
-    for r in ret:
-        print(r) 
-        
+    # ret = db.fetch_query("SELECT * FROM sqlite_schema")
+    # for r in ret:
+    #     print(r)
+    korean_dynasty_data = get_korean_dynasty()
+    # print(korean_dynasty_data)
+    for king, values in korean_dynasty_data.items():
+        for year, content in values:
+            db.execute_query("""
+                INSERT INTO Goryeo(king, year, content)
+                VALUES(?,?,?)
+            """,king, int(year), content )
+
+
     # DB 연결 해제
     db.disconnect()
     
