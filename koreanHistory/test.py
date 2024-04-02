@@ -1,11 +1,23 @@
-import tkinter as tk
+import requests
+from bs4 import BeautifulSoup
+import json
 
-window = tk.Tk()
+king = '태조'
+content = '조물군 전투'
+def get_first_result_link(query):
+    base_url = 'https://encykorea.aks.ac.kr/Article/Search/'+ query
+    response = requests.get(base_url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    # print(soup)
+    first_result = soup.find('ul',class_ = "encyclopedia-list").find('a')['href']
+    if first_result:
+        return "https://encykorea.aks.ac.kr/" + first_result
+    # .find('a')['href']
 
-window.title('show_mask')
-window.geometry("400x250+100+100")
-window.resizable(True,True)
+    return first_result
 
-img = tk.PhotoImage(file=)
 
-window.mainloop()
+# 사용 예시
+search_query = '태조 조선 전통'
+first_result_link = get_first_result_link(f"{king} {content}")
+# print("First result link:", first_result_link)
