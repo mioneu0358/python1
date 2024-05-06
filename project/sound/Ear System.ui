@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1200</width>
+    <width>1181</width>
     <height>681</height>
    </rect>
   </property>
@@ -57,7 +57,7 @@
      <set>Qt::AlignCenter</set>
     </property>
    </widget>
-   <widget class="QFrame" name="frame">
+   <widget class="QFrame" name="SubFrame">
     <property name="geometry">
      <rect>
       <x>30</x>
@@ -91,12 +91,12 @@
       <string>TextLabel</string>
      </property>
     </widget>
-    <widget class="QLabel" name="label">
+    <widget class="QLabel" name="OrganLabel">
      <property name="geometry">
       <rect>
-       <x>820</x>
+       <x>750</x>
        <y>40</y>
-       <width>200</width>
+       <width>350</width>
        <height>60</height>
       </rect>
      </property>
@@ -113,24 +113,25 @@
       <number>0</number>
      </property>
      <property name="text">
-      <string> 기 관: </string>
+      <string> 기 관:  </string>
      </property>
      <property name="alignment">
       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
      </property>
     </widget>
-    <widget class="QLabel" name="label_3">
+    <widget class="QLabel" name="ExplainLabel">
      <property name="geometry">
       <rect>
-       <x>770</x>
-       <y>110</y>
-       <width>300</width>
-       <height>141</height>
+       <x>750</x>
+       <y>160</y>
+       <width>350</width>
+       <height>111</height>
       </rect>
      </property>
      <property name="font">
       <font>
-       <pointsize>40</pointsize>
+       <family>Agency FB</family>
+       <pointsize>18</pointsize>
       </font>
      </property>
      <property name="frameShape">
@@ -140,17 +141,17 @@
       <number>2</number>
      </property>
      <property name="text">
-      <string>TextLabel</string>
+      <string/>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>
      </property>
     </widget>
-    <widget class="QPushButton" name="NextButton">
+    <widget class="QPushButton" name="NextBtn">
      <property name="geometry">
       <rect>
        <x>840</x>
-       <y>310</y>
+       <y>330</y>
        <width>170</width>
        <height>70</height>
       </rect>
@@ -164,11 +165,11 @@
       <string>NEXT</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="PreviousButton">
+    <widget class="QPushButton" name="PreviousBtn">
      <property name="geometry">
       <rect>
        <x>840</x>
-       <y>410</y>
+       <y>420</y>
        <width>170</width>
        <height>70</height>
       </rect>
@@ -182,8 +183,36 @@
       <string>PREVIOUS</string>
      </property>
     </widget>
+    <widget class="QLabel" name="OrganLabel_2">
+     <property name="geometry">
+      <rect>
+       <x>750</x>
+       <y>119</y>
+       <width>350</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">font: 18pt &quot;Segoe Print&quot;;</string>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::Box</enum>
+     </property>
+     <property name="lineWidth">
+      <number>2</number>
+     </property>
+     <property name="midLineWidth">
+      <number>0</number>
+     </property>
+     <property name="text">
+      <string>설명</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
    </widget>
-   <zorder>frame</zorder>
+   <zorder>SubFrame</zorder>
    <zorder>TitleLabel</zorder>
   </widget>
  </widget>
