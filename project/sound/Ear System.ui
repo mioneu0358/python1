@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1181</width>
-    <height>681</height>
+    <width>1200</width>
+    <height>731</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,7 +19,7 @@
      <x>0</x>
      <y>0</y>
      <width>1201</width>
-     <height>680</height>
+     <height>730</height>
     </rect>
    </property>
    <property name="frameShape">
@@ -57,162 +57,359 @@
      <set>Qt::AlignCenter</set>
     </property>
    </widget>
-   <widget class="QFrame" name="SubFrame">
+   <widget class="QTabWidget" name="tabWidget">
     <property name="geometry">
      <rect>
-      <x>30</x>
+      <x>10</x>
       <y>90</y>
-      <width>1140</width>
-      <height>590</height>
+      <width>1180</width>
+      <height>630</height>
      </rect>
     </property>
-    <property name="frameShape">
-     <enum>QFrame::Box</enum>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>16</pointsize>
+      <stylestrategy>PreferAntialias</stylestrategy>
+     </font>
     </property>
-    <property name="frameShadow">
-     <enum>QFrame::Plain</enum>
+    <property name="toolTip">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:18pt;&quot;&gt;소리의 이동경로&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
-    <property name="lineWidth">
-     <number>2</number>
+    <property name="layoutDirection">
+     <enum>Qt::RightToLeft</enum>
     </property>
-    <widget class="QLabel" name="EarLabel">
-     <property name="geometry">
-      <rect>
-       <x>0</x>
-       <y>-10</y>
-       <width>710</width>
-       <height>611</height>
-      </rect>
-     </property>
-     <property name="frameShape">
-      <enum>QFrame::Box</enum>
-     </property>
-     <property name="text">
-      <string>TextLabel</string>
-     </property>
+    <property name="tabPosition">
+     <enum>QTabWidget::South</enum>
+    </property>
+    <property name="currentIndex">
+     <number>0</number>
+    </property>
+    <property name="elideMode">
+     <enum>Qt::ElideLeft</enum>
+    </property>
+    <widget class="QWidget" name="AnotherTab">
+     <attribute name="title">
+      <string>귀의 부가적인 기능</string>
+     </attribute>
+     <widget class="QFrame" name="SubFrame_2">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>1171</width>
+        <height>590</height>
+       </rect>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::Box</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Plain</enum>
+      </property>
+      <property name="lineWidth">
+       <number>2</number>
+      </property>
+      <widget class="QLabel" name="EarLabel_4">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>-10</y>
+         <width>710</width>
+         <height>611</height>
+        </rect>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::Box</enum>
+       </property>
+       <property name="text">
+        <string>TextLabel</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="OrganLabel_7">
+       <property name="geometry">
+        <rect>
+         <x>750</x>
+         <y>40</y>
+         <width>350</width>
+         <height>60</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">font: 22pt &quot;Segoe Print&quot;;</string>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::Box</enum>
+       </property>
+       <property name="lineWidth">
+        <number>2</number>
+       </property>
+       <property name="midLineWidth">
+        <number>0</number>
+       </property>
+       <property name="text">
+        <string> 기 관:  </string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+      <widget class="QLabel" name="ExplainLabel_4">
+       <property name="geometry">
+        <rect>
+         <x>750</x>
+         <y>160</y>
+         <width>350</width>
+         <height>111</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Agency FB</family>
+         <pointsize>18</pointsize>
+        </font>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::Box</enum>
+       </property>
+       <property name="lineWidth">
+        <number>2</number>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="NextBtn_4">
+       <property name="geometry">
+        <rect>
+         <x>840</x>
+         <y>330</y>
+         <width>170</width>
+         <height>70</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>20</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>NEXT</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="PreviousBtn_4">
+       <property name="geometry">
+        <rect>
+         <x>840</x>
+         <y>420</y>
+         <width>170</width>
+         <height>70</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>20</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>PREVIOUS</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="OrganLabel_8">
+       <property name="geometry">
+        <rect>
+         <x>750</x>
+         <y>119</y>
+         <width>350</width>
+         <height>41</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">font: 18pt &quot;Segoe Print&quot;;</string>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::Box</enum>
+       </property>
+       <property name="lineWidth">
+        <number>2</number>
+       </property>
+       <property name="midLineWidth">
+        <number>0</number>
+       </property>
+       <property name="text">
+        <string>설명</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </widget>
     </widget>
-    <widget class="QLabel" name="OrganLabel">
-     <property name="geometry">
-      <rect>
-       <x>750</x>
-       <y>40</y>
-       <width>350</width>
-       <height>60</height>
-      </rect>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">font: 22pt &quot;Segoe Print&quot;;</string>
-     </property>
-     <property name="frameShape">
-      <enum>QFrame::Box</enum>
-     </property>
-     <property name="lineWidth">
-      <number>2</number>
-     </property>
-     <property name="midLineWidth">
-      <number>0</number>
-     </property>
-     <property name="text">
-      <string> 기 관:  </string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-     </property>
-    </widget>
-    <widget class="QLabel" name="ExplainLabel">
-     <property name="geometry">
-      <rect>
-       <x>750</x>
-       <y>160</y>
-       <width>350</width>
-       <height>111</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <family>Agency FB</family>
-       <pointsize>18</pointsize>
-      </font>
-     </property>
-     <property name="frameShape">
-      <enum>QFrame::Box</enum>
-     </property>
-     <property name="lineWidth">
-      <number>2</number>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignCenter</set>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="NextBtn">
-     <property name="geometry">
-      <rect>
-       <x>840</x>
-       <y>330</y>
-       <width>170</width>
-       <height>70</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <pointsize>20</pointsize>
-      </font>
-     </property>
-     <property name="text">
-      <string>NEXT</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="PreviousBtn">
-     <property name="geometry">
-      <rect>
-       <x>840</x>
-       <y>420</y>
-       <width>170</width>
-       <height>70</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <pointsize>20</pointsize>
-      </font>
-     </property>
-     <property name="text">
-      <string>PREVIOUS</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="OrganLabel_2">
-     <property name="geometry">
-      <rect>
-       <x>750</x>
-       <y>119</y>
-       <width>350</width>
-       <height>41</height>
-      </rect>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">font: 18pt &quot;Segoe Print&quot;;</string>
-     </property>
-     <property name="frameShape">
-      <enum>QFrame::Box</enum>
-     </property>
-     <property name="lineWidth">
-      <number>2</number>
-     </property>
-     <property name="midLineWidth">
-      <number>0</number>
-     </property>
-     <property name="text">
-      <string>설명</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignCenter</set>
-     </property>
+    <widget class="QWidget" name="SoundTab">
+     <attribute name="title">
+      <string>소리의 이동경로</string>
+     </attribute>
+     <widget class="QFrame" name="SubFrame">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>1171</width>
+        <height>590</height>
+       </rect>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::Box</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Plain</enum>
+      </property>
+      <property name="lineWidth">
+       <number>2</number>
+      </property>
+      <widget class="QLabel" name="EarLabel_2">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>-10</y>
+         <width>710</width>
+         <height>611</height>
+        </rect>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::Box</enum>
+       </property>
+       <property name="text">
+        <string>TextLabel</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="OrganLabel_3">
+       <property name="geometry">
+        <rect>
+         <x>750</x>
+         <y>40</y>
+         <width>350</width>
+         <height>60</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">font: 22pt &quot;Segoe Print&quot;;</string>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::Box</enum>
+       </property>
+       <property name="lineWidth">
+        <number>2</number>
+       </property>
+       <property name="midLineWidth">
+        <number>0</number>
+       </property>
+       <property name="text">
+        <string> 기 관:  </string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+      <widget class="QLabel" name="ExplainLabel_2">
+       <property name="geometry">
+        <rect>
+         <x>750</x>
+         <y>160</y>
+         <width>350</width>
+         <height>111</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Agency FB</family>
+         <pointsize>18</pointsize>
+        </font>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::Box</enum>
+       </property>
+       <property name="lineWidth">
+        <number>2</number>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="NextBtn_2">
+       <property name="geometry">
+        <rect>
+         <x>840</x>
+         <y>330</y>
+         <width>170</width>
+         <height>70</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>20</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>NEXT</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="PreviousBtn_2">
+       <property name="geometry">
+        <rect>
+         <x>840</x>
+         <y>420</y>
+         <width>170</width>
+         <height>70</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>20</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>PREVIOUS</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="OrganLabel_4">
+       <property name="geometry">
+        <rect>
+         <x>750</x>
+         <y>119</y>
+         <width>350</width>
+         <height>41</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">font: 18pt &quot;Segoe Print&quot;;</string>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::Box</enum>
+       </property>
+       <property name="lineWidth">
+        <number>2</number>
+       </property>
+       <property name="midLineWidth">
+        <number>0</number>
+       </property>
+       <property name="text">
+        <string>설명</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </widget>
     </widget>
    </widget>
-   <zorder>SubFrame</zorder>
+   <zorder>tabWidget</zorder>
    <zorder>TitleLabel</zorder>
   </widget>
  </widget>
