@@ -40,17 +40,97 @@
 # 많은 비정상적이고 모순된 문법 규칙들로 인해, 영어는 많은 복잡한 요소를 가지고 있습니다. 그러나 동일한 현상이 많은 영어 사전에 있는 단어들에게도 적용됩니다.
 # 단어 "cabbageheaded"는 알파벳의 첫 절반(a–m)으로만 구성된 가장 긴 단어입니다. 단어 "nontortuous"는 알파벳의 두 번째 절반(n–z)으로만 구성된 가장 긴 단어입니다.
 
-# 우리는 또한 알파벳의 첫 절반과 두 번째 절반의 문자들이 교대로 나오는 단어들을 찾을 수 있습니다. 첫 절반의 알파벳 문자로 시작하는 가장 긴 교대 단어들은 12글자입니다. 예로는 "comparatives"와 "itinerariums"가 있습니다. 두 번째 절반의 알파벳 문자로 시작하는 가장 긴 교대 단어들은 13글자입니다. 예로는 "paranephritis"와 "phraseography"가 있습니다.
+# 우리는 또한 알파벳의 첫 절반과 두 번째 절반의 문자들이 교대로 나오는 단어들을 찾을 수 있습니다. 첫 절반의 알파벳 문자로 시작하는 가장 긴 교대 단어들은 12글자입니다.
+# 예로는 "comparatives"와 "itinerariums"가 있습니다. 두 번째 절반의 알파벳 문자로 시작하는 가장 긴 교대 단어들은 13글자입니다.
+# 예로는 "paranephritis"와 "phraseography"가 있습니다.
 
 # 과제
 # 단어는 오직 대문자와 소문자로만 구성됩니다. 당신의 과제는 다음과 같습니다:
-
+alphabet = " ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+def position(c):
+    return alphabet.find(c.upper())
 # first_position 함수: 단어(str)를 입력으로 받아야 합니다. 이 함수는 단어에서 알파벳 순서상 첫 번째 문자의 위치(int; A=1, B=2, C=3, …, Z=26)를 반환해야 합니다.
+def first_position(string):
+    arr = []
+    for i in string:
+        arr.append(position(i))
+    return min(arr)
 # last_position 함수: 단어(str)를 입력으로 받아야 합니다. 이 함수는 단어에서 알파벳 순서상 마지막 문자의 위치(int; A=1, B=2, C=3, …, Z=26)를 반환해야 합니다.
+def last_position(string):
+    arr = []
+    for i in string:
+        arr.append(position(i))
+    return max(arr)
 # isfirst 함수: 단어(str)를 입력으로 받아야 합니다. 이 함수는 단어가 알파벳의 첫 절반(a–m)으로만 구성되어 있는지를 나타내는 부울 값(bool)을 반환해야 합니다.
+def isfirst(string):
+    for c in string:
+        idx = position(c)
+        if idx >= 14: return False
+    return True
 # issecond 함수: 단어(str)를 입력으로 받아야 합니다. 이 함수는 단어가 알파벳의 두 번째 절반(n–z)으로만 구성되어 있는지를 나타내는 부울 값(bool)을 반환해야 합니다.
+def issecond(string):
+    for c in string:
+        idx = position(c)
+        if idx < 14: return False
+    return True
 # isalternate 함수: 단어(str)를 입력으로 받아야 합니다. 이 함수는 단어가 알파벳의 첫 절반(a–m)과 두 번째 절반(n–z)의 문자들이 교대로 나오는지를 나타내는 부울 값(bool)을 반환해야 합니다.
 # 이 함수들 중 어떤 것도 대문자와 소문자를 구분해서는 안 됩니다.
+def isalternate(string):
+    for i in range(len(string)-1):
+        a = isfirst(string[i])
+        b = issecond((string[i+1]))
+        if a != b: return False
+    return True
+if __name__ == "__main__":
+    # print(position('G'))
+    # 7
+    # print(position('v'))
+    # 22
+    #
+    # print(first_position('FIDDLEDEEDEE'))
+    # 4
+    # print(first_position('soupspoons'))
+    # 14
+    # print(first_position('CoMpArAtIvEs'))
+    # 1
+    # print(first_position('pArAnEpHrItIs'))
+    # 1
+    #
+    # print(last_position('FIDDLEDEEDEE'))
+    # 12
+    # print(last_position('soupspoons'))
+    # 21
+    # print(last_position('CoMpArAtIvEs'))
+    # 22
+    # print(last_position('pArAnEpHrItIs'))
+    # 20
+    #
+    # print(isfirst('FIDDLEDEEDEE'))
+    # True
+    # print(isfirst('soupspoons'))
+    # False
+    # print(isfirst('CoMpArAtIvEs'))
+    # False
+    # print(isfirst('pArAnEpHrItIs'))
+    # False
+
+    # print(issecond('FIDDLEDEEDEE'))
+    # False
+    # print(issecond('soupspoons'))
+    # True
+    # print(issecond('CoMpArAtIvEs'))
+    # False
+    # print(issecond('pArAnEpHrItIs'))
+    # False
+
+    print(isalternate('FIDDLEDEEDEE'))
+    False
+    print(isalternate('soupspoons'))
+    False
+    print(isalternate('CoMpArAtIvEs'))
+    True
+    print(isalternate('pArAnEpHrItIs'))
+    True
 
 
 
