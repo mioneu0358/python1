@@ -75,8 +75,8 @@ time.sleep(2)
 low_parts = selected_high_part.find_elements(By.CSS_SELECTOR, "li > input") # 체크용
 low_parts_t = selected_high_part.find_elements(By.CSS_SELECTOR, "li")# 텍스트용
 print(f"len(low_parts): {len(low_parts)}")
-low_parts_text = list(map(lambda x: x.text, low_parts_t))
-print([(0,"전체선택")] + list(enumerate(low_parts_text,start=1)))
+low_parts_text = ['전체선택'] + list(map(lambda x: x.text, low_parts_t))
+print(list(enumerate(low_parts_text)))
 choose_checkbox_idx = list(map(int,input().split()))
 
 if choose_checkbox_idx[0] != 0:
@@ -87,6 +87,7 @@ if choose_checkbox_idx[0] != 0:
 
         time.sleep(1)
 
+driver.find_element(By.CSS_SELECTOR,"#ptsRafCh1AccidentContent").click()
 
 # 사고부문
 sago = Select(driver.find_element(By.CSS_SELECTOR, "#ptsRafSimpleCondition"))
@@ -98,7 +99,7 @@ sago.select_by_visible_text(input("사고 부문을 선택하시오: "))
 time.sleep(3)
 
 # 검색하기
-submit_btn = driver.find_element(By.CSS_SELECTOR,"#regionAccidentFind > div.condition-wrap > p > a")
+submit_btn = driver.find_element(By.CLASS_NAME,"btn-search")
 submit_btn.click()
 input()
 driver.quit()
