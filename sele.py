@@ -59,6 +59,35 @@ for i in acident_list:
     print(i.is_selected())
 
 
+# 유형 선택
+high_part_tab = driver.find_element(By.CSS_SELECTOR, "#regionAccidentFind > div.condition-wrap > ul")
+high_parts = high_part_tab.find_elements(By.TAG_NAME,'li')
+high_parts_text = list(map(lambda x: x.text, high_parts))
+print(high_parts_text)
+high_parts_input = input("대분류를 선택하시오: ")
+idx = high_parts_text.index(high_parts_input)
+print(idx)
+selected_high_part = high_parts[idx]
+selected_high_part.click()
+time.sleep(2)
+
+# 유형 하부 탭 설정
+low_parts = selected_high_part.find_elements(By.CSS_SELECTOR, "li > input") # 체크용
+low_parts_t = selected_high_part.find_elements(By.CSS_SELECTOR, "li")# 텍스트용
+print(f"len(low_parts): {len(low_parts)}")
+low_parts_text = list(map(lambda x: x.text, low_parts_t))
+print([(0,"전체선택")] + list(enumerate(low_parts_text,start=1)))
+choose_checkbox_idx = list(map(int,input().split()))
+
+if choose_checkbox_idx[0] != 0:
+    for i in range(len(low_parts)):
+        if i not in choose_checkbox_idx:
+            low_parts[i].click()
+        print(low_parts_text[i], low_parts[i].is_selected())
+
+        time.sleep(1)
+
+
 # 사고부문
 sago = Select(driver.find_element(By.CSS_SELECTOR, "#ptsRafSimpleCondition"))
 sago_options = sago.options
