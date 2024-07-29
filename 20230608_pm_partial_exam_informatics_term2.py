@@ -1,93 +1,4 @@
 class Centrifuge:
-    # n: 구멍 수, data: 원심분리기 구멍 중 시험관이 채워진 구멍을 나타내는 구성
-    def __init__(self,n,data):
-        self.n = n
-        self.test_tube = sorted(data)
-        pass
-
-    def __repr__(self):
-        return f"Centrifuge({self.n}, {self.test_tube})"
-
-    def rotate(self,clockwise=False):
-        print(f"rotate: {self.test_tube} => ", end='')
-        if clockwise:
-            for i in range(len(self.test_tube)):
-                self.test_tube[i] -= 1
-                if self.test_tube[i] < 0:
-                    self.test_tube[i] = self.n-1
-        else:
-            for i in range(len(self.test_tube)):
-                self.test_tube[i] += 1
-                if self.test_tube[i] == self.n:
-                    self.test_tube[i] = 0
-        self.test_tube.sort()
-        print(self.test_tube)
-        return self
-
-    def mirror(self):
-        print(f"mirror: {self.test_tube} => ",end ='')
-        for i in range(len(self.test_tube)):
-            if self.test_tube[i] == 0: continue
-            self.test_tube[i] = abs(self.n - self.test_tube[i])
-        self.test_tube.sort()
-        print(self.test_tube)
-        return self
-    def __eq__(self, other):
-        if self.n != other.n: return False
-        flag = False
-        for i in range(self.n):
-            self.rotate()
-            if self.test_tube == other.test_tube:
-                flag = True
-        return flag
-
-
-    def __iadd__(self, other):
-        pass
-    def __isub__(self, other):
-        pass
-if __name__ == "__main__":
-    # centrifuge = Centrifuge(6, {4, 1, 3, 0})
-    # print(centrifuge)
-    # # Centrifuge(6, [0, 1, 3, 4])
-    # print(centrifuge.rotate())
-    # # Centrifuge(6, [1, 2, 4, 5])
-    # print(centrifuge.rotate(clockwise=True))
-    # # Centrifuge(6, [0, 1, 3, 4])
-    # print(centrifuge.mirror())
-    # # Centrifuge(6, [0, 2, 3, 5])
-    # print(centrifuge.mirror())
-    # # Centrifuge(6, [0, 1, 3, 4])
-
-    centrifuge = Centrifuge(6, [2, 0, 5])
-    print(centrifuge == Centrifuge(6, [2, 3, 5]))
-    # True
-    print(centrifuge == Centrifuge(6, [3, 4, 5]))
-    # False
-    print(centrifuge)
-    # Centrifuge(6, [0, 2, 5])
-    print(centrifuge.rotate().rotate().mirror())
-    # Centrifuge(6, [2, 4, 5])
-    print(centrifuge.mirror().rotate(True).rotate(True))
-    # # Centrifuge(6, [0, 2, 5])
-    #
-    # Centrifuge(6, [0, 1, 2, 4, 5])
-    # >> > centrifuge += Centrifuge(6, [1, 4, 2])
-    # Traceback(most recent call last):
-    # AssertionError: could not fill holes
-    # >> > centrifuge -= Centrifuge(6, {1, 4})
-    # >> > centrifuge
-    # Centrifuge(6, [0, 2, 5])
-    # >> > centrifuge -= Centrifuge(6, (1, 5))
-    # Traceback(most
-    # recent
-    # call
-    # last):
-    # AssertionError: could
-    # not empty
-    # holes
-#---------------------------------------------------------------------------------------------------------
-class Centrifuge:
     # Centrifuge 클래스를 정의하여 시험관이 채워진 구멍을 가진 원심분리기를 나타내십시오. 새로운 원심분리기(Centrifuge)를 생성할 때 두 개의 인자를 전달해야 합니다:
     # 𝑖) 구멍의 수 𝑛과 𝑖𝑖) 시험관이 채워진 구멍을 설명하는 구성.
     def __init__(self,n,data):
@@ -105,7 +16,7 @@ class Centrifuge:
         # 시계 방향 또는 반시계 방향으로 회전하는 rotate 메소드(기본값: False). 회전이 시계 방향(True) 또는 반시계 방향(False)인지
         # 나타내는 부울 값(bool)을 가질 수 있는 선택적 매개변수를 가집니다. 이 메소드는 원심분리기 𝑐의 모든 시험관이 시계 방향 또는 반시계 방향으로
         # 한 번의 회전 단계를 진행하도록 설정해야 하며, 원심분리기 𝑐에 대한 참조를 반환해야 합니다.
-        print(f"rotate: {self.test_tube} => ", end='')
+        # print(f"rotate: {self.test_tube} => ", end='')
         new_test_tube = set()
         if clockwise:
             for tube in self.test_tube:
@@ -114,18 +25,18 @@ class Centrifuge:
             for tube in self.test_tube:
                 new_test_tube.add((tube + 1) % self.n)
         self.test_tube = new_test_tube
-        print(self.test_tube)
+        # print(self.test_tube)
         return self
 
     def mirror(self):
         # mirror 메소드는 인자를 받지 않습니다. 이 메소드는 원심분리기 𝑐의 시험관 배치를 𝑋 축을 기준으로 대칭 시키고, 원심분리기 𝑐에 대한 참조를 반환해야 합니다.
         # 힌트: mirror 연산을 더 잘 이해하기 위해 종이에 예제를 작성해 보는 것이 도움이 될 수 있습니다.
-        print(f"mirror: {self.test_tube} => ",end ='')
+        # print(f"mirror: {self.test_tube} => ",end ='')
         new_test_tube = set()
         for tube in self.test_tube:
-            new_test_tube.add((self.n - tube ) % self.n)
+            new_test_tube.add((self.n - tube) % self.n)
         self.test_tube = new_test_tube
-        print(self.test_tube)
+        # print(self.test_tube)
         return self
     def __eq__(self, other):
         # 두 원심분리기 𝑐와 𝑑(Centrifuge)가 동일한 경우를 확인하기 위해 == 연산자를 사용할 수 있어야 합니다. 이는 두 원심분리기가 같은 수의 구멍을 가지고,
@@ -162,49 +73,61 @@ class Centrifuge:
         # 이는 원심분리기 𝑑의 상태를 변경하지 않아야 합니다. 만약 원심분리기 𝑐와 𝑑가 같은 수의 구멍을 가지고 있지 않거나 원심분리기 𝑑에서 채워진 구멍이 원심분리기 𝑐에서 비어 있는 경우,
         # 원심분리기 𝑐의 상태는 변경되지 않아야 하며, AssertionError가 "could not empty holes" 메시지와 함께 발생해야 합니다.
         if self.n != other.n:
-            raise AssertionError("could not fill holes")
+            raise AssertionError("could not empty holes")
         new_test_tube = self.test_tube.copy()
         for tube in other.test_tube:
             if tube not in self.test_tube:
-                raise AssertionError("could not fill holes")
+                raise AssertionError("could not empty holes")
             else:
                 new_test_tube.remove(tube)
         self.test_tube = new_test_tube
         return self
 
 if __name__ == "__main__":
-    # centrifuge = Centrifuge(6, {4, 1, 3, 0})
-    # print(centrifuge)
-    # Centrifuge(6, [0, 1, 3, 4])
-    # print(centrifuge.rotate())
-    # Centrifuge(6, [1, 2, 4, 5])
-    # print(centrifuge.rotate(clockwise=True))
-    # Centrifuge(6, [0, 1, 3, 4])
-    # print(centrifuge.mirror())
-    # Centrifuge(6, [0, 2, 3, 5])
-    # print(centrifuge.mirror())
-    # Centrifuge(6, [0, 1, 3, 4])
-    #
+    centrifuge = Centrifuge(6, {4, 1, 3, 0})
+    print(centrifuge)
+    Centrifuge(6, [0, 1, 3, 4])
+
+    print(centrifuge.rotate())
+    Centrifuge(6, [1, 2, 4, 5])
+
+    print(centrifuge.rotate(clockwise=True))
+    Centrifuge(6, [0, 1, 3, 4])
+
+    print(centrifuge.mirror())
+    Centrifuge(6, [0, 2, 3, 5])
+
+    print(centrifuge.mirror())
+    Centrifuge(6, [0, 1, 3, 4])
+
+
     centrifuge = Centrifuge(6, [2, 0, 5])
     print(centrifuge == Centrifuge(6, [2, 4, 5]))
     True
+
     print(centrifuge == Centrifuge(6, [3, 4, 5]))
     False
+
     print(centrifuge)
     Centrifuge(6, [0, 2, 5])
+
     print(centrifuge.rotate().rotate().mirror())
     Centrifuge(6, [2, 4, 5])
+
     print(centrifuge.mirror().rotate(True).rotate(True))
     Centrifuge(6, [0, 2, 5])
+
     centrifuge += Centrifuge(6, {1, 4})
-    print("+=",centrifuge)
+    print(centrifuge)
     Centrifuge(6, [0, 1, 2, 4, 5])
+
     # centrifuge += Centrifuge(6, [1, 4, 2])
     # Traceback(mostrecentcalllast):
     # AssertionError: couldnot fillholes
     centrifuge -= Centrifuge(6, {1, 4})
     print(centrifuge)
     Centrifuge(6, [0, 2, 5])
+
     centrifuge -= Centrifuge(6, (1, 5))
     # Traceback(mostrecentcalllast):
-    # AssertionError: couldnot emptyholes
+    # AssertionError: could not empty holes
