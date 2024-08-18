@@ -16,60 +16,66 @@ for i in range(s):
 # THEREISNOAUTHORITYWHODECIDESWHATISAGOODIDEA
 
 # Programming assignment 2: Platypus (5 points)------------------------------------------------------------------------------------------------------------------------------------
-# # Programming assignment 2: Platypus (5 points) 
-# from fractions import Fraction
-#
-# def combine(words, fracs):
-#     result = ""
-#     for i in range(len(words)):
-#         a,b = map(int,str(fracs[i]).split('/'))
-#         a *= len(words[i]) // b
-#         if a < 0:
-#             result += words[i][a:]
-#         else:
-#             result += words[i][:a]
-#     return result
-#
-# def decompose(query):
-#     parse = query.replace('What is ','').replace(',','').replace('and ','').replace('?','')
-#     parse = parse.split()
-#     result1 = []
-#     result2 = []
-#     for i in range(0,len(parse),2):
-#         frac_a,frac_b = map(int,parse[i].split('/'))
-#         result2.append(Fraction(frac_a,frac_b))
-#         result1.append(parse[i+1])
-#     return result1,result2
-# def answer(query):
-#     words, fracs = decompose(query)
-#     return combine(words,fracs)
-# if __name__ == "__main__":
-#     print(combine(['wallaby', 'parakeet', 'perch'], [Fraction(4, 7), Fraction(1, 4), Fraction(3, 5)]))
-#     'wallpaper'
-#
-#     print(combine(['ALPACA', 'PARTRIDGE'], [Fraction(-1, 3), Fraction(-7, 9)]))
-#     'CARTRIDGE'
-#
-#     print(combine(['Manatee', 'cheetah', 'hamster'], [Fraction(3, 7), Fraction(3, 7), Fraction(-4, 7)]))
-#     'Manchester'
-#     #
-#     print(decompose('What is 4/7 wallaby, 1/4 parakeet and 3/5 perch?'))
-#     (['wallaby', 'parakeet', 'perch'], [Fraction(4, 7), Fraction(1, 4), Fraction(3, 5)])
-#
-#     print(decompose('What is -1/3 ALPACA and -7/9 PARTRIDGE?'))
-#     (['ALPACA', 'PARTRIDGE'], [Fraction(-1, 3), Fraction(-7, 9)])
-#
-#     print(decompose('What is 3/7 Manatee, 3/7 cheetah and -4/7 hamster?'))
-#     (['Manatee', 'cheetah', 'hamster'], [Fraction(3, 7), Fraction(3, 7), Fraction(-4, 7)])
-#
-#     print(answer('What is 4/7 wallaby, 1/4 parakeet and 3/5 perch?'))
-#     'wallpaper'
-#
-#     print(answer('What is -1/3 ALPACA and -7/9 PARTRIDGE?'))
-#     'CARTRIDGE'
-#
-#     print(answer('What is 3/7 Manatee, 3/7 cheetah and -4/7 hamster?'))
-#     'Manchester'
+from fractions import Fraction
+
+def word_fraction(word,frac):
+    result = ""
+    a, b = frac.numerator, frac.denominator
+    a *= len(word) // b
+    if a < 0:
+        result += word[a:]
+    else:
+        result += word[:a]
+    return result
+
+def combine(words, fracs):
+    result = ""
+    for i in range(len(words)):
+        result += word_fraction(words[i], fracs[i])
+    return result
+
+def decompose(query):
+    parse = query.replace('What is ','').replace(',','').replace('and ','').replace('?','')
+    parse = parse.split()
+    result1 = []
+    result2 = []
+    for i in range(0,len(parse),2):
+        frac_a,frac_b = map(int,parse[i].split('/'))
+        result2.append(Fraction(frac_a,frac_b))
+        result1.append(parse[i+1])
+    return result1,result2
+def answer(query):
+    words, fracs = decompose(query)
+    return combine(words,fracs)
+if __name__ == "__main__":
+    print(word_fraction("wallaby", Fraction(4,7)))
+    print(combine(['wallaby', 'parakeet', 'perch'], [Fraction(4, 7), Fraction(1, 4), Fraction(3, 5)]))
+    'wallpaper'
+
+    print(combine(['ALPACA', 'PARTRIDGE'], [Fraction(-1, 3), Fraction(-7, 9)]))
+    'CARTRIDGE'
+
+    print(combine(['Manatee', 'cheetah', 'hamster'], [Fraction(3, 7), Fraction(3, 7), Fraction(-4, 7)]))
+    'Manchester'
+    #
+    print(decompose('What is 4/7 wallaby, 1/4 parakeet and 3/5 perch?'))
+    (['wallaby', 'parakeet', 'perch'], [Fraction(4, 7), Fraction(1, 4), Fraction(3, 5)])
+
+    print(decompose('What is -1/3 ALPACA and -7/9 PARTRIDGE?'))
+    (['ALPACA', 'PARTRIDGE'], [Fraction(-1, 3), Fraction(-7, 9)])
+
+    print(decompose('What is 3/7 Manatee, 3/7 cheetah and -4/7 hamster?'))
+    (['Manatee', 'cheetah', 'hamster'], [Fraction(3, 7), Fraction(3, 7), Fraction(-4, 7)])
+
+    print(answer('What is 4/7 wallaby, 1/4 parakeet and 3/5 perch?'))
+    'wallpaper'
+
+    print(answer('What is -1/3 ALPACA and -7/9 PARTRIDGE?'))
+    'CARTRIDGE'
+
+    print(answer('What is 3/7 Manatee, 3/7 cheetah and -4/7 hamster?'))
+    'Manchester'
+
 
 # Programming assignment 3: Color nonogram (6 points) -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
