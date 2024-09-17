@@ -1,73 +1,325 @@
 import time
+from datetime import datetime
 import sys
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.select import Select
 from PyQt5.uic import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
-form_ui = loadUiType("GIS_UI_TEST.ui")[0]
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.select import Select
+import pickle
+import os
+
+form_ui = loadUiType("GUI_TEST.ui")[0]
 
 class MainWindow(QMainWindow, form_ui):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-        self.init_UI()
-        self.initialize_data()
-        self.show()
-    def init_UI(self):
-        self.startYear.addItem('시작연도')
-        self.endYear.addItem('종료연도')
-        self.sido.addItem("시도를 선택하시오.")
-        self.sigungu.addItem("시군구를 선택하시오.")
-        # 가운데 정렬 방식
+        self.initUi()
+
+    # ui 적용시킬 데이터 초기화 or 세팅
+    def initUi(self):
+        # 시작년도 세팅
+        self.startYear.addItem("시작 년도")
+        self.endYear.addItem("끝 연도")
+        self.sido.addItem("시/도를 선택하시오.")
+        self.sigungu.addItem("시/군/구를 선택하시오.")
+        self.accidentType.addItem("사고 부문을 선택하시오.")
+        self.startYear.lineEdit().setAlignment(Qt.AlignCenter)
+        self.endYear.lineEdit().setAlignment(Qt.AlignCenter)
         self.sido.lineEdit().setAlignment(Qt.AlignCenter)
         self.sigungu.lineEdit().setAlignment(Qt.AlignCenter)
-        self.sido.currentTextChanged.connect(self.changeSigungu)
-        # self.sido_sigungu = {'서울특별시': [':: 전체 ::', '강남구', '강동구', '강북구', '강서구', '관악구', '광진구', '구로구', '금천구', '노원구', '도봉구', '동대문구', '동작구', '마포구', '서대문구', '서초구', '성동구', '성북구', '송파구', '양천구', '영등포구', '용산구', '은평구', '종로구', '중구', '중랑구'], '부산광역시': [':: 전체 ::', '강서구', '금정구', '기장군', '남구', '동구', '동래구', '부산진구', '북구', '사상구', '사하구', '서구', '수영구', '연제구', '영도구', '중구', '해운대구'], '대구광역시': [':: 전체 ::', '군위군', '남구', '달서구', '달성군', '동구', '북구', '서구', '수성구', '중구'], '인천광역시': [':: 전체 ::', '강화군', '계양구', '남구(구)', '남동구', '동구', '미추홀구', '부평구', '서구', '연수구', '옹진군', '중구'], '광주광역시': [':: 전체 ::', '광산구', '남구', '동구', '북구', '서구'], '대전광역시': [':: 전체 ::', '대덕구', '동구', '서구', '유성구', '중구'], '울산광역시': [':: 전체 ::', '남구', '동구', '북구', '울주군', '중구'], '세종특별자치시': [':: 전체 ::', '세종특별자치시'], '경기도': [':: 전체 ::', '가평군', '고양시', '- 고양시 덕양구', '- 고양시 일산동구', '- 고양시 일산서구', '과천시', '광명시', '광주시', '구리시', '군포시', '김포시', '남양주시', '동두천시', '부천시', '부천시소사구(구)', '부천시오정구(구)', '부천시원미구(구)', '성남시', '- 성남시 분당구', '- 성남시 수정구', '- 성남시 중원구', '수원시', '- 수원시 권선구', '- 수원시 영통구', '- 수원시 장안구', '- 수원시 팔달구', '시흥시', '안산시', '- 안산시 단원구', '- 안산시 상록구', '안성시', '안양시', '- 안양시 동안구', '- 안양시 만안구', '양주시', '양평군', '여주군(구)', '여주시', '연천군', '오산시', '용인시', '- 용인시 기흥구', '- 용인시 수지구', '- 용인시 처인구', '의왕시', '의정부시', '이천시', '파주시', '평택시', '포천시', '하남시', '화성시'], '강원특별자치도': [':: 전체 ::', '강릉시', '고성군', '동해시', '삼척시', '속초시', '양구군', '양양군', '영월군', '원주시', '인제군', '정선군', '철원군', '춘천시', '태백시', '평창군', '홍천군', '화천군', '횡성군'], '충청북도': [':: 전체 ::', '괴산군', '단양군', '보은군', '영동군', '옥천군', '음성군', '제천시', '증평군', '진천군', '청원군(구)', '청주시', '- 청주시 상당구', '- 청주시 서원구', '- 청주시 청원구', '- 청주시 흥덕구', '충주시'], '충청남도': [':: 전체 ::', '계룡시', '공주시', '금산군', '논산시', '당진군(구)', '당진시', '보령시', '부여군', '서산시', '서천군', '아산시', '연기군(구)', '예산군', '천안시', '천안시(구)', '- 천안시 동남구', '- 천안시 서북구', '청양군', '태안군', '홍성군'], '전라북도': [':: 전체 ::', '고창군', '군산시', '김제시', '남원시', '무주군', '부안군', '순창군', '완주군', '익산시', '임실군', '장수군', '전주시', '- 전주시 덕진구', '- 전주시 완산구', '정읍시', '진안군'], '전라남도': [':: 전체 ::', '강진군', '고흥군', '곡성군', '광양시', '구례군', '나주시', '담양군', '목포시', '무안군', '보성군', '순천시', '신안군', '여수시', '영광군', '영암군', '완도군', '장성군', '장흥군', '진도군', '함평군', '해남군', '화순군'], '경상북도': [':: 전체 ::', '경산시', '경주시', '고령군', '구미시', '군위군(구)', '김천시', '문경시', '봉화군', '상주시', '성주군', '안동시', '영덕군', '영양군', '영주시', '영천시', '예천군', '울릉군', '울진군', '의성군', '청도군', '청송군', '칠곡군', '포항시', '- 포항시 남구', '- 포항시 북구'], '경상남도': [':: 전체 ::', '거제시', '거창군', '고성군', '김해시', '남해군', '마산시(구)', '밀양시', '사천시', '산청군', '양산시', '의령군', '진주시', '진해시(구)', '창녕군', '창원시', '- 창원시 마산합포구', '- 창원시 마산회원구', '- 창원시 성산구', '- 창원시 의창구', '- 창원시 진해구', '창원시(구)', '통영시', '하동군', '함안군', '함양군', '합천군'], '제주도': [':: 전체 ::', '서귀포시', '제주시']}
-        # for key in self.sido_sigungu:
-        #     self.sido.addItem(key)
-        # test_combo = QComboBox(self)
-        # test_combo.()
+        self.accidentType.lineEdit().setAlignment(Qt.AlignCenter)
 
 
-    def initialize_data(self):
-            options = Options()
-            options.add_experimental_option('detach', True)  # 창 자동으로 종료되는 것을 방지
-            options.add_argument("disable-blink-features=AutomationControlled")
-            options.add_argument('headless')
-            driver = webdriver.Chrome(options=options)
+        # 연도 범위 설정 ------------------------------------------------------------------------------
+        curr_year = datetime.now().year   # 현재 연도: int
+        for y in range(curr_year-1 , curr_year-16 , -1):
+            self.startYear.addItem(str(y))
+        self.startYear.currentTextChanged.connect(self.changeEndYear)
+        # -------------------------------------------------------------------------------------------
 
-            driver.get("https://taas.koroad.or.kr/gis/mcm/mcl/initMap.do?menuId=GIS_GMP_STS_RSN")
-            for y in range(2007, 2025):
-                self.startYear.addItem(str(y))
+        self.file_name = 'GIS_DB.pkl'           # 위젯에 사용할 데이터를 저장할 공간
+        self.sido_sigungu = {}                  # {시도: 시군구}
+        self.conditions = {}                    # {상위 조건: 하위 조건}
+        self.accidentTypeList = []              # [노인보행자사고, 보행자사고, ...]
 
-            self.sido_sigungu = {}
-            high_part_area = Select(driver.find_element(By.CSS_SELECTOR, "#ptsRafSido"))
-            for h_op in high_part_area.options:
-                key = h_op.text
-                high_part_area.select_by_visible_text(key)
-                self.sido.addItem(key)
-                print(key)
-                time.sleep(1)
-                low_part_area = Select(driver.find_element(By.CSS_SELECTOR, "#ptsRafSigungu"))
-                values = list(map(lambda x: x.text, low_part_area.options))
-                self.sido_sigungu[key] = values
-                time.sleep(1)
-            print(self.sido_sigungu)
+        if not os.path.isfile(self.file_name):  # DB유무 확인
+            self.downloadData()
+        else:
+            # self.file_name에 저장된 데이터 불러오기
+            with open(self.file_name, 'rb') as file:
+                self.sido_sigungu = pickle.load(file, encoding='utf8')
+                self.conditions = pickle.load(file, encoding='utf8')
+                self.accidentTypeList = pickle.load(file, encoding='utf8')
+
+        # 시도/시군구 정보 등록 ---------------------------------------------------------------------------------
+        for sido in self.sido_sigungu:
+            self.sido.addItem(sido)
+
+        self.sido.currentTextChanged.connect(self.changeSigungu)        # 시도 변경시 시군구 변경
+        self.runBtn.clicked.connect(self.RUN)                           # 실행 버튼에 함수 연결
+
+        # 세부 조건 탭 등록 -------------------------------------------------------------------------------------
+        self.conditionsTab.clear()                      # 초기에 들어있는 tab들 제거
+        for key, values in self.conditions.items():
+            layout = QVBoxLayout()                      # tab에 넣을 위젯들을 담을 박스
+            for val in values:                          # checkbox 생성 및 추가(체크 된 상태로)
+                check = QCheckBox(val)
+                check.click()
+                layout.addWidget(check)
+
+            tab = QWidget()
+            tab.setLayout(layout)
+            scroll = QScrollArea()
+            scroll.setWidget(tab)
+            scroll.setWidgetResizable(True)
+            self.conditionsTab.addTab(scroll, key)
+
+        # 사고부문 등록
+        for acc in self.accidentTypeList:
+            self.accidentType.addItem(acc)
+
+
+
+    def downloadData(self):
+        # 드라이버 옵션 설정 ---------------------------------------------------------------------------
+        options = Options()
+        options.add_experimental_option('detach', True)  # 창 자동으로 종료되는 것을 방지
+        options.add_argument("disable-blink-features=AutomationControlled")
+        # options.add_argument('headless')
+        driver = webdriver.Chrome(options=options)
+        driver.implicitly_wait(10)
+        driver.get("https://taas.koroad.or.kr/gis/mcm/mcl/initMap.do?menuId=GIS_GMP_STS_RSN")
+
+        # 시도/시군구 정보 가져오기 ------------------------------------------------------------------------
+        high_part_area = Select(driver.find_element(By.CSS_SELECTOR, "#ptsRafSido"))
+        low_part_area = Select(driver.find_element(By.CSS_SELECTOR, "#ptsRafSigungu"))
+
+        for h_op in high_part_area.options:
+            key = h_op.text
+            high_part_area.select_by_visible_text(key)
+            time.sleep(1)
+            values = list(map(lambda x: x.text, low_part_area.options))
+            self.sido_sigungu[key] = values
+        with open(self.file_name, 'wb') as file:
+            pickle.dump(self.sido_sigungu, file)
+
+        # 세부 조건 가져오기
+        elem_high_part_tab = driver.find_element(By.CSS_SELECTOR, "#regionAccidentFind > div.condition-wrap > ul")
+        elem_high_parts = elem_high_part_tab.find_elements(By.TAG_NAME, 'li')
+        elem_high_parts_text = list(map(lambda x: x.text, elem_high_parts))
+        for i in range(len(elem_high_parts)):
+            elem_high_parts[i].click()
+            time.sleep(1)
+            low_parts = elem_high_parts[i].find_elements(By.CSS_SELECTOR, "li")  # 텍스트용
+            low_parts_text = []
+            parsed_low_parts = []
+            for low in low_parts:
+                if '\n' in low.text:
+                    continue
+                parsed_low_parts.append(low)
+                low_parts_text.append(low.text)
+
+            self.conditions[elem_high_parts_text[i]] = low_parts_text
+            driver.find_element(By.CSS_SELECTOR, "#ptsRafCh1AccidentContent").click()
+
+        with open(self.file_name, 'ab') as file:
+            pickle.dump(self.conditions, file)
+
+        # 사고부문 가져오기 ------------------------------------------------------------------------
+        sago = Select(driver.find_element(By.CSS_SELECTOR, "#ptsRafSimpleCondition"))
+        sago_options = sago.options
+        self.accidentTypeList = list(map(lambda x: x.text, sago_options))[1:]
+        with open(self.file_name,'ab') as file:
+            pickle.dump(self.accidentTypeList,file)
+
+
+    def changeEndYear(self):
+        # 시작년도를 기준으로 이후 2년까지 endYear에 담아준다.
+        # 단, 최대 년도인 2023년을 넘은 값은 넣을 수 없다.
+        s_year = self.startYear.currentText()
+        if not s_year.isdigit(): return
+        self.endYear.clear()
+        for y in range(min(int(s_year)+2, datetime.now().year-1), int(s_year)-1, -1):
+            self.endYear.addItem(str(y))
+
     def changeSigungu(self):
-        key = self.sido.currentText()
-        print(key)
+        sido = self.sido.currentText()
+        if sido not in self.sido_sigungu: return
         self.sigungu.clear()
-        for val in self.sido_sigungu[key][1:]:
+        for val in self.sido_sigungu[sido]:
             self.sigungu.addItem(val)
 
+    def RUN(self):  # 각 위젯 값들을 불러와 페이지에 전달.
+        startYear = self.startYear.currentText()    # 시작 연도 : str/int
+        endYear = self.endYear.currentText()        # 끝 연도   : str/int
+        sido = self.sido.currentText()              # 시도      : str
+        sigungu = self.sigungu.currentText()        # 시군구    : str
+        accGrid = {}                                # 사고 경도 체크박스 : {사고유형: True/False}
+        checked_conditions = {}                     # 세부 조건         : {상위조건: [하위조건체크(True/False), ...]}
+        accType = self.accidentType.currentText()   # 사고부문   : str
+
+        # 콤보박스 중 선택하지 않은 값들이 온 경우 아무것도 하지 않는다.
+        if not startYear.isdigit() or not endYear.isdigit() or '선택하시오' in sido or '선택하시오'in sigungu or '선택하시오' in accType:
+            print("검색조건 다시 선택")
+            return
+
+        # 사고 경도 체크박스 값 확인
+        for row in range(self.accidentGrid.rowCount()):
+            for col in range(self.accidentGrid.columnCount()):
+                item = self.accidentGrid.itemAtPosition(row, col)
+                if item is not None:
+                    widget = item.widget()
+                    if isinstance(widget, QCheckBox):  # QCheckBox인지 확인
+                        accGrid[widget.text()] = widget.isChecked()
+
+
+        # 세부 조건 탭 체크 유무 확인
+        # self.conditionstab -> scrollarea -> tab(Qwidget) -> layout -> checkbox
+        for i in range(self.conditionsTab.count()):
+            tab_name = self.conditionsTab.tabText(i)  # 탭의 이름 (키)
+            scroll_area = self.conditionsTab.widget(i)  # QScrollArea
+            tab_widget = scroll_area.widget()  # 실제 탭의 QWidget
+            layout = tab_widget.layout()  # QVBoxLayout
+
+            checked_list = []  # 체크된 항목을 저장할 리스트
+            for j in range(layout.count()):
+                widget = layout.itemAt(j).widget()  # 레이아웃의 위젯 가져오기
+                if isinstance(widget, QCheckBox):  # 체크박스인지 확인
+                    checked_list.append(widget.isChecked())
+            checked_conditions[tab_name] = checked_list  # 결과 딕셔너리에 저장
+
+
+        # 지정한 설정값을 기준으로 나온 사고 내역 저장하기
+        options = Options()
+        options.add_experimental_option('detach', True)  # 창 자동으로 종료되는 것을 방지
+        options.add_argument("disable-blink-features=AutomationControlled")
+        # options.add_argument('headless')
+
+        # 다운로드 경로 변경하기
+        download_directory = "C:\\Users\\mione\\Desktop"
+        options.add_experimental_option("prefs", {
+            "download.default_directory": download_directory,
+            "download.prompt_for_download": False,
+            "download.directory_upgrade": True,
+            "safebrowsing.enabled": True
+        })
+
+        driver = webdriver.Chrome(options=options)
+        driver.implicitly_wait(10)
+        driver.get("https://taas.koroad.or.kr/gis/mcm/mcl/initMap.do?menuId=GIS_GMP_STS_RSN")
+        time.sleep(1)
+
+        # 연도 설정
+        elem_start_year = Select(driver.find_element(By.CSS_SELECTOR, "#ptsRafYearStart"))
+        elem_start_year.select_by_value(startYear)
+        elem_end_year = Select(driver.find_element(By.CSS_SELECTOR, "#ptsRafYearEnd"))
+        elem_end_year.select_by_value(endYear)
+        print("연도 설정 끝")
+        # 시도 시군구 설정
+        elem_sido = Select(driver.find_element(By.CSS_SELECTOR, "#ptsRafSido"))
+        elem_sido.select_by_visible_text(sido)
+        time.sleep(1)
+        elem_sigungu = Select(driver.find_element(By.CSS_SELECTOR, "#ptsRafSigungu"))
+        elem_sigungu.select_by_visible_text(sigungu)
+        print('시도 시군구 설정 끝')
+        # 사고 경도 설정
+        print(accGrid)
+        elem_accDegree_box = driver.find_element(By.CSS_SELECTOR, "#ptsRafCh1AccidentContent")
+        elem_accDegree_list = elem_accDegree_box.find_elements(By.CSS_SELECTOR, "input[type=checkbox]")
+        vals = list(accGrid.values())
+        for i in range(len(vals)):
+            if vals[i]:
+                if not elem_accDegree_list[i].is_selected():
+                    elem_accDegree_list[i].click()
+            else:
+                if elem_accDegree_list[i].is_selected():
+                    elem_accDegree_list[i].click()
+        print("사고 경도 체크박스 설정 끝")
+        # 세부 조건 설정
+        elem_high_part_tab = driver.find_element(By.CSS_SELECTOR, "#regionAccidentFind > div.condition-wrap > ul")
+        elem_high_parts = elem_high_part_tab.find_elements(By.TAG_NAME, 'li')
+        for i in range(len(elem_high_parts)):
+            key = elem_high_parts[i].text
+            elem_high_parts[i].click()
+            elem_low_parts = elem_high_parts[i].find_elements(By.CSS_SELECTOR, "li")  # 텍스트용
+            parsed_low_parts = []
+            for low in elem_low_parts:
+                if '\n' in low.text:
+                    continue
+                parsed_low_parts.append(low)
+            values = checked_conditions[key]
+            for j in range(len(values)):
+                if not values[j]:
+                    parsed_low_parts[j].find_element(By.TAG_NAME, 'input').click()
+        driver.find_element(By.CSS_SELECTOR, "#ptsRafCh1AccidentContent").click()
+        print('세부 조건 설정 끝')
+        # 사고 부문 설정
+        elem_sago = Select(driver.find_element(By.CSS_SELECTOR, "#ptsRafSimpleCondition"))
+        elem_sago.select_by_visible_text(accType)
+        print('사고부문 설정 끝')
+
+
+        # 검색 및 다운로드
+        submit_btn = driver.find_element(By.CLASS_NAME, "btn-search")
+        submit_btn.click()
+        time.sleep(3)
+        case_cnt = driver.find_element(By.CSS_SELECTOR,"#regionAccidentFind > div.searc-total > div.total-count > span").text
+        if int(case_cnt) != 0:
+            # 목록 보기 버튼
+            get_data_btn = driver.find_element(By.CSS_SELECTOR,"#regionAccidentFind > div.searc-total > div.btn > p > a")
+            get_data_btn.click()
+            # 새로 열린 창으로 driver전환 기존 driver가 0번째
+            driver.switch_to.window(driver.window_handles[1])
+            # excel로 다운로드 버튼(다운로드 경로는 크롬에 설정된 다운로드 경로로 다운로드 된다.)
+            to_Excel_btn = driver.find_element(By.CSS_SELECTOR, "body > div > input")
+            to_Excel_btn.click()
+            time.sleep(5)
+            download_file_name = "accidentInfoList.xlx"
+            while True:
+                time.sleep(1)
+                if os.path.isfile(download_directory + '\\' + download_file_name):
+                    print("저장 완료")
+                    break
+                else:
+                    print("저장 실패")
+        input()
+
+# time.sleep(1)
+# # 검색 버튼
+# search_btn = driver.find_element(By.CSS_SELECTOR,"#regionAccidentFind > div.condition-wrap > p > a")
+# search_btn.click()
+# time.sleep(1)
+# # 사건 수 확인
+# case_cnt = driver.find_element(By.CSS_SELECTOR,"#regionAccidentFind > div.searc-total > div.total-count > span").text
+# print(case_cnt)
+# if int(case_cnt) != 0:
+#     # 목록 보기 버튼
+#     get_data_btn = driver.find_element(By.CSS_SELECTOR,"#regionAccidentFind > div.searc-total > div.btn > p > a")
+#     get_data_btn.click()
+#     # 새로 열린 창으로 driver전환 기존 driver가 0번째
+#     driver.switch_to.window(driver.window_handles[1])
+#     # excel로 다운로드 버튼(다운로드 경로는 크롬에 설정된 다운로드 경로로 다운로드 된다.)
+#     to_Excel_btn = driver.find_element(By.CSS_SELECTOR,"body > div > input")
+#     to_Excel_btn.click()
+#     time.sleep(5)
+#     download_file_name = "accidentInfoList.xls"
+#     while True:
+#         time.sleep(1)
+#         if os.path.isfile(download_directory+'\\'+download_file_name):
+#             print("저장 완료")
+#             break
+#         else:
+#             print("저장 실패")
+# input()
 
 
 if __name__ == "__main__":
-    app =QApplication(sys.argv)
+    app = QApplication(sys.argv)
     main_window = MainWindow()
     main_window.show()
     app.exec_()
