@@ -91,10 +91,18 @@ class MainWindow(QMainWindow, form_ui):
         options = Options()
         options.add_experimental_option('detach', True)  # 창 자동으로 종료되는 것을 방지
         options.add_argument("disable-blink-features=AutomationControlled")
+        # 다운로드 경로 변경하기
+        download_directory = "C:\\Users\\ParkChanBin\\OneDrive\\바탕 화면"
+        options.add_experimental_option("prefs", {
+            "download.default_directory": download_directory,
+            "download.prompt_for_download": False,
+            "download.directory_upgrade": True,
+            "safebrowsing.enabled": True
+        })
         # options.add_argument('headless')
         driver = webdriver.Chrome(options=options)
-        driver.implicitly_wait(10)
         driver.get("https://taas.koroad.or.kr/gis/mcm/mcl/initMap.do?menuId=GIS_GMP_STS_RSN")
+
 
         # 시도/시군구 정보 가져오기 ------------------------------------------------------------------------
         high_part_area = Select(driver.find_element(By.CSS_SELECTOR, "#ptsRafSido"))
@@ -125,6 +133,7 @@ class MainWindow(QMainWindow, form_ui):
                 parsed_low_parts.append(low)
                 low_parts_text.append(low.text)
 
+            time.sleep(1)
             self.conditions[high_parts_text[i]] = low_parts_text
             driver.find_element(By.CSS_SELECTOR, "#ptsRafCh1AccidentContent").click()
 
@@ -163,12 +172,6 @@ class MainWindow(QMainWindow, form_ui):
         accGrid = {}                                # 사고 경도 체크박스 : {사고유형: True/False}
         checked_conditions = {}                     # 세부 조건         : {상위조건: [하위조건체크(True/False), ...]}
         accType = self.accidentType.currentText()   # 사고부문   : str
-
-        # 콤보박스 중 선택하지 않은 값들이 온 경우 아무것도 하지 않는다.
-        if not startYear.isdigit() or not endYear.isdigit() or '선택하시오' in sido or '선택하시오'in sigungu or '선택하시오' in accType:
-            print("검색조건 다시 선택")
-            return
-
         # 사고 경도 체크박스 값 확인
         for row in range(self.accidentGrid.rowCount()):
             for col in range(self.accidentGrid.columnCount()):
@@ -194,99 +197,8 @@ class MainWindow(QMainWindow, form_ui):
                     checked_list.append(widget.isChecked())
             checked_conditions[tab_name] = checked_list  # 결과 딕셔너리에 저장
 
-
-        # 지정한 설정값을 기준으로 나온 사고 내역 저장하기
-        options = Options()
-        options.add_experimental_option('detach', True)  # 창 자동으로 종료되는 것을 방지
-        options.add_argument("disable-blink-features=AutomationControlled")
-        # options.add_argument('headless')
-
-        # 다운로드 경로 변경하기
-        download_directory = "파일을 저장할 다운로드 경로"
-        options.add_experimental_option("prefs", {
-            "download.default_directory": download_directory,
-            "download.prompt_for_download": False,
-            "download.directory_upgrade": True,
-            "safebrowsing.enabled": True
-        })
-
-        driver = webdriver.Chrome(options=options)
-        driver.implicitly_wait(10)
-        driver.get("https://taas.koroad.or.kr/gis/mcm/mcl/initMap.do?menuId=GIS_GMP_STS_RSN")
-        time.sleep(1)
-
-        # 연도 설정
-        elem_start_year = Select(driver.find_element(By.CSS_SELECTOR, "#ptsRafYearStart"))
-        elem_start_year.select_by_value(startYear)
-        elem_end_year = Select(driver.find_element(By.CSS_SELECTOR, "#ptsRafYearEnd"))
-        elem_end_year.select_by_value(endYear)
-
-        # 시도 시군구 설정
-        elem_sido = Select(driver.find_element(By.CSS_SELECTOR, "#ptsRafSido"))
-        elem_sido.select_by_visible_text(sido)
-        time.sleep(1)
-        elem_sigungu = Select(driver.find_element(By.CSS_SELECTOR, "#ptsRafSigungu"))
-        elem_sigungu.select_by_visible_text(sigungu)
-
-        # 사고 경도 설정
-        print(accGrid)
-        elem_accDegree_box = driver.find_element(By.CSS_SELECTOR, "#ptsRafCh1AccidentContent")
-        elem_accDegree_list = elem_accDegree_box.find_elements(By.CSS_SELECTOR, "input[type=checkbox]")
-        vals = list(accGrid.values())
-        for i in range(len(vals)):
-            if vals[i]:
-                if not elem_accDegree_list[i].is_selected():
-                    elem_accDegree_list[i].click()
-            else:
-                if elem_accDegree_list[i].is_selected():
-                    elem_accDegree_list[i].click()
-
-        # 세부 조건 설정
-        elem_high_part_tab = driver.find_element(By.CSS_SELECTOR, "#regionAccidentFind > div.condition-wrap > ul")
-        elem_high_parts = elem_high_part_tab.find_elements(By.TAG_NAME, 'li')
-        i = 0
-        for key,values in checked_conditions.items():
-            if False in values:
-                elem_high_parts[i].click()
-                low_parts = elem_high_parts[i].find_elements(By.CSS_SELECTOR, "li")  # 텍스트용
-
-                for j in range(len(values)):
-                    for j in low_parts:
-                        if '\n' in low_parts[j].text:
-                            continue
-                        if values[j] == False:
-                            low_parts[j].click()
-            i += 1
-
-
-# time.sleep(1)
-# # 검색 버튼
-# search_btn = driver.find_element(By.CSS_SELECTOR,"#regionAccidentFind > div.condition-wrap > p > a")
-# search_btn.click()
-# time.sleep(1)
-# # 사건 수 확인
-# case_cnt = driver.find_element(By.CSS_SELECTOR,"#regionAccidentFind > div.searc-total > div.total-count > span").text
-# print(case_cnt)
-# if int(case_cnt) != 0:
-#     # 목록 보기 버튼
-#     get_data_btn = driver.find_element(By.CSS_SELECTOR,"#regionAccidentFind > div.searc-total > div.btn > p > a")
-#     get_data_btn.click()
-#     # 새로 열린 창으로 driver전환 기존 driver가 0번째
-#     driver.switch_to.window(driver.window_handles[1])
-#     # excel로 다운로드 버튼(다운로드 경로는 크롬에 설정된 다운로드 경로로 다운로드 된다.)
-#     to_Excel_btn = driver.find_element(By.CSS_SELECTOR,"body > div > input")
-#     to_Excel_btn.click()
-#     time.sleep(5)
-#     download_file_name = "accidentInfoList.xls"
-#     while True:
-#         time.sleep(1)
-#         if os.path.isfile(download_directory+'\\'+download_file_name):
-#             print("저장 완료")
-#             break
-#         else:
-#             print("저장 실패")
-# input()
-
+        for key,value in checked_conditions.items():
+            print(key,value)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
