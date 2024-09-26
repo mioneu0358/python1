@@ -11,6 +11,8 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.select import Select
 import pickle
 import os
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 form_ui = loadUiType("GUI_TEST.ui")[0]
 
@@ -22,6 +24,7 @@ class MainWindow(QMainWindow, form_ui):
 
     # ui 적용시킬 데이터 초기화 or 세팅
     def initUi(self):
+        self.setFixedSize(self.width(),self.height())
         # 시작년도 세팅
         self.startYear.addItem("시작 년도")
         self.endYear.addItem("끝 연도")
@@ -35,6 +38,13 @@ class MainWindow(QMainWindow, form_ui):
         self.accidentType.lineEdit().setAlignment(Qt.AlignCenter)
 
 
+        self.sido.currentTextChanged.connect(self.changeSigungu)        # 시도 변경시 시군구 변경
+        self.runBtn.clicked.connect(self.RUN)                           # 실행 버튼에 함수 연결
+        self.path_btn.clicked.connect(self.getPath)
+
+        self.downloadFilename = "accidentInfoList.xlx"
+        self.downloadPath = "C:\\Users\\ParkChanBin\\Downloads"
+        self.downloadPath_label.setText(self.downloadPath)
         # 연도 범위 설정 ------------------------------------------------------------------------------
         curr_year = datetime.now().year   # 현재 연도: int
         for y in range(curr_year-1 , curr_year-16 , -1):
@@ -60,9 +70,6 @@ class MainWindow(QMainWindow, form_ui):
         for sido in self.sido_sigungu:
             self.sido.addItem(sido)
 
-        self.sido.currentTextChanged.connect(self.changeSigungu)        # 시도 변경시 시군구 변경
-        self.runBtn.clicked.connect(self.RUN)                           # 실행 버튼에 함수 연결
-
         # 세부 조건 탭 등록 -------------------------------------------------------------------------------------
         self.conditionsTab.clear()                      # 초기에 들어있는 tab들 제거
         for key, values in self.conditions.items():
@@ -82,8 +89,6 @@ class MainWindow(QMainWindow, form_ui):
         # 사고부문 등록
         for acc in self.accidentTypeList:
             self.accidentType.addItem(acc)
-
-
 
     def downloadData(self):
         # 드라이버 옵션 설정 ---------------------------------------------------------------------------
@@ -137,7 +142,6 @@ class MainWindow(QMainWindow, form_ui):
         with open(self.file_name,'ab') as file:
             pickle.dump(self.accidentTypeList,file)
 
-
     def changeEndYear(self):
         # 시작년도를 기준으로 이후 2년까지 endYear에 담아준다.
         # 단, 최대 년도인 2023년을 넘은 값은 넣을 수 없다.
@@ -177,7 +181,6 @@ class MainWindow(QMainWindow, form_ui):
                     if isinstance(widget, QCheckBox):  # QCheckBox인지 확인
                         accGrid[widget.text()] = widget.isChecked()
 
-
         # 세부 조건 탭 체크 유무 확인
         # self.conditionstab -> scrollarea -> tab(Qwidget) -> layout -> checkbox
         for i in range(self.conditionsTab.count()):
@@ -196,127 +199,120 @@ class MainWindow(QMainWindow, form_ui):
 
         # 지정한 설정값을 기준으로 나온 사고 내역 저장하기
         options = Options()
-        options.add_experimental_option('detach', True)  # 창 자동으로 종료되는 것을 방지
+        # options.add_experimental_option('detach', True)  # 창 자동으로 종료되는 것을 방지
         options.add_argument("disable-blink-features=AutomationControlled")
         # options.add_argument('headless')
 
         # 다운로드 경로 변경하기
-        download_directory = "C:\\Users\\mione\\Desktop"
         options.add_experimental_option("prefs", {
-            "download.default_directory": download_directory,
+            "download.default_directory": self.downloadPath,
             "download.prompt_for_download": False,
             "download.directory_upgrade": True,
             "safebrowsing.enabled": True
         })
+        try:
+            driver = webdriver.Chrome(options=options)
+            driver.implicitly_wait(10)
+            driver.get("https://taas.koroad.or.kr/gis/mcm/mcl/initMap.do?menuId=GIS_GMP_STS_RSN")
+            time.sleep(1)
 
-        driver = webdriver.Chrome(options=options)
-        driver.implicitly_wait(10)
-        driver.get("https://taas.koroad.or.kr/gis/mcm/mcl/initMap.do?menuId=GIS_GMP_STS_RSN")
-        time.sleep(1)
-
-        # 연도 설정
-        elem_start_year = Select(driver.find_element(By.CSS_SELECTOR, "#ptsRafYearStart"))
-        elem_start_year.select_by_value(startYear)
-        elem_end_year = Select(driver.find_element(By.CSS_SELECTOR, "#ptsRafYearEnd"))
-        elem_end_year.select_by_value(endYear)
-        print("연도 설정 끝")
-        # 시도 시군구 설정
-        elem_sido = Select(driver.find_element(By.CSS_SELECTOR, "#ptsRafSido"))
-        elem_sido.select_by_visible_text(sido)
-        time.sleep(1)
-        elem_sigungu = Select(driver.find_element(By.CSS_SELECTOR, "#ptsRafSigungu"))
-        elem_sigungu.select_by_visible_text(sigungu)
-        print('시도 시군구 설정 끝')
-        # 사고 경도 설정
-        print(accGrid)
-        elem_accDegree_box = driver.find_element(By.CSS_SELECTOR, "#ptsRafCh1AccidentContent")
-        elem_accDegree_list = elem_accDegree_box.find_elements(By.CSS_SELECTOR, "input[type=checkbox]")
-        vals = list(accGrid.values())
-        for i in range(len(vals)):
-            if vals[i]:
-                if not elem_accDegree_list[i].is_selected():
-                    elem_accDegree_list[i].click()
-            else:
-                if elem_accDegree_list[i].is_selected():
-                    elem_accDegree_list[i].click()
-        print("사고 경도 체크박스 설정 끝")
-        # 세부 조건 설정
-        elem_high_part_tab = driver.find_element(By.CSS_SELECTOR, "#regionAccidentFind > div.condition-wrap > ul")
-        elem_high_parts = elem_high_part_tab.find_elements(By.TAG_NAME, 'li')
-        for i in range(len(elem_high_parts)):
-            key = elem_high_parts[i].text
-            elem_high_parts[i].click()
-            elem_low_parts = elem_high_parts[i].find_elements(By.CSS_SELECTOR, "li")  # 텍스트용
-            parsed_low_parts = []
-            for low in elem_low_parts:
-                if '\n' in low.text:
-                    continue
-                parsed_low_parts.append(low)
-            values = checked_conditions[key]
-            for j in range(len(values)):
-                if not values[j]:
-                    parsed_low_parts[j].find_element(By.TAG_NAME, 'input').click()
-        driver.find_element(By.CSS_SELECTOR, "#ptsRafCh1AccidentContent").click()
-        print('세부 조건 설정 끝')
-        # 사고 부문 설정
-        elem_sago = Select(driver.find_element(By.CSS_SELECTOR, "#ptsRafSimpleCondition"))
-        elem_sago.select_by_visible_text(accType)
-        print('사고부문 설정 끝')
-
-
-        # 검색 및 다운로드
-        submit_btn = driver.find_element(By.CLASS_NAME, "btn-search")
-        submit_btn.click()
-        time.sleep(3)
-        case_cnt = driver.find_element(By.CSS_SELECTOR,"#regionAccidentFind > div.searc-total > div.total-count > span").text
-        if int(case_cnt) != 0:
-            # 목록 보기 버튼
-            get_data_btn = driver.find_element(By.CSS_SELECTOR,"#regionAccidentFind > div.searc-total > div.btn > p > a")
-            get_data_btn.click()
-            # 새로 열린 창으로 driver전환 기존 driver가 0번째
-            driver.switch_to.window(driver.window_handles[1])
-            # excel로 다운로드 버튼(다운로드 경로는 크롬에 설정된 다운로드 경로로 다운로드 된다.)
-            to_Excel_btn = driver.find_element(By.CSS_SELECTOR, "body > div > input")
-            to_Excel_btn.click()
-            time.sleep(5)
-            download_file_name = "accidentInfoList.xlx"
-            while True:
-                time.sleep(1)
-                if os.path.isfile(download_directory + '\\' + download_file_name):
-                    print("저장 완료")
-                    break
+            # 연도 설정
+            elem_start_year = Select(driver.find_element(By.CSS_SELECTOR, "#ptsRafYearStart"))
+            elem_start_year.select_by_value(startYear)
+            elem_end_year = Select(driver.find_element(By.CSS_SELECTOR, "#ptsRafYearEnd"))
+            elem_end_year.select_by_value(endYear)
+            print("연도 설정 끝")
+            # 시도 시군구 설정
+            elem_sido = Select(driver.find_element(By.CSS_SELECTOR, "#ptsRafSido"))
+            elem_sido.select_by_visible_text(sido)
+            time.sleep(1)
+            elem_sigungu = Select(driver.find_element(By.CSS_SELECTOR, "#ptsRafSigungu"))
+            elem_sigungu.select_by_visible_text(sigungu)
+            print('시도 시군구 설정 끝')
+            # 사고 경도 설정
+            print(accGrid)
+            elem_accDegree_box = driver.find_element(By.CSS_SELECTOR, "#ptsRafCh1AccidentContent")
+            elem_accDegree_list = elem_accDegree_box.find_elements(By.CSS_SELECTOR, "input[type=checkbox]")
+            vals = list(accGrid.values())
+            for i in range(len(vals)):
+                if vals[i]:
+                    if not elem_accDegree_list[i].is_selected():
+                        elem_accDegree_list[i].click()
                 else:
-                    print("저장 실패")
-        input()
+                    if elem_accDegree_list[i].is_selected():
+                        elem_accDegree_list[i].click()
+            print("사고 경도 체크박스 설정 끝")
+            # 세부 조건 설정
+            elem_high_part_tab = driver.find_element(By.CSS_SELECTOR, "#regionAccidentFind > div.condition-wrap > ul")
+            elem_high_parts = elem_high_part_tab.find_elements(By.TAG_NAME, 'li')
+            for i in range(len(elem_high_parts)):
+                key = elem_high_parts[i].text
+                elem_high_parts[i].click()
+                elem_low_parts = elem_high_parts[i].find_elements(By.CSS_SELECTOR, "li")  # 텍스트용
+                parsed_low_parts = []
+                for low in elem_low_parts:
+                    if '\n' in low.text:
+                        continue
+                    parsed_low_parts.append(low)
+                values = checked_conditions[key]
+                for j in range(len(values)):
+                    if not values[j]:
+                        parsed_low_parts[j].find_element(By.TAG_NAME, 'input').click()
+            driver.find_element(By.CSS_SELECTOR, "#ptsRafCh1AccidentContent").click()
+            print('세부 조건 설정 끝')
+            # 사고 부문 설정
+            elem_sago = Select(driver.find_element(By.CSS_SELECTOR, "#ptsRafSimpleCondition"))
+            elem_sago.select_by_visible_text(accType)
+            print('사고부문 설정 끝')
 
-# time.sleep(1)
-# # 검색 버튼
-# search_btn = driver.find_element(By.CSS_SELECTOR,"#regionAccidentFind > div.condition-wrap > p > a")
-# search_btn.click()
-# time.sleep(1)
-# # 사건 수 확인
-# case_cnt = driver.find_element(By.CSS_SELECTOR,"#regionAccidentFind > div.searc-total > div.total-count > span").text
-# print(case_cnt)
-# if int(case_cnt) != 0:
-#     # 목록 보기 버튼
-#     get_data_btn = driver.find_element(By.CSS_SELECTOR,"#regionAccidentFind > div.searc-total > div.btn > p > a")
-#     get_data_btn.click()
-#     # 새로 열린 창으로 driver전환 기존 driver가 0번째
-#     driver.switch_to.window(driver.window_handles[1])
-#     # excel로 다운로드 버튼(다운로드 경로는 크롬에 설정된 다운로드 경로로 다운로드 된다.)
-#     to_Excel_btn = driver.find_element(By.CSS_SELECTOR,"body > div > input")
-#     to_Excel_btn.click()
-#     time.sleep(5)
-#     download_file_name = "accidentInfoList.xls"
-#     while True:
-#         time.sleep(1)
-#         if os.path.isfile(download_directory+'\\'+download_file_name):
-#             print("저장 완료")
-#             break
-#         else:
-#             print("저장 실패")
-# input()
+            # 검색 및 다운로드
+            submit_btn = driver.find_element(By.CLASS_NAME, "btn-search")
+            submit_btn.click()
+            # 기존의 요소에서 text를 가져옵니다.
+            case_cnt = driver.find_element(By.CSS_SELECTOR,
+                                          "#regionAccidentFind > div.searc-total > div.total-count > span")
+            initial_text = case_cnt.text
 
+            # WebDriverWait을 사용하여 10초 동안 텍스트가 변할 때까지 기다립니다.
+            WebDriverWait(driver, 10).until(lambda driver: case_cnt.text != initial_text)
+            print("기다림 끝")
+            # 텍스트가 변경된 후 새로운 텍스트를 가져옵니다.
+            case_cnt = case_cnt.text
+            print(case_cnt)
+            print(f"건수: {case_cnt.replace(',','')}")
+
+            if int(case_cnt.replace(',','')) != 0:
+                # 목록 보기 버튼
+                get_data_btn = driver.find_element(By.CSS_SELECTOR,"#regionAccidentFind > div.searc-total > div.btn > p > a")
+                get_data_btn.click()
+                print('목록보기')
+                # 새로 열린 창으로 driver전환 기존 driver가 0번째
+                driver.switch_to.window(driver.window_handles[1])
+                # excel로 다운로드 버튼(다운로드 경로는 크롬에 설정된 다운로드 경로로 다운로드 된다.)
+                to_Excel_btn = driver.find_element(By.CSS_SELECTOR, "body > div > input")
+                to_Excel_btn.click()
+                print("다운로드 시작")
+                time.sleep(5)
+
+                while True:
+                    time.sleep(1)
+                    if os.path.isfile(self.downloadPath + '\\' + self.downloadFilename):
+                        print("저장 완료")
+                        break
+                    else:
+                        print("저장 실패")
+        except Exception as e:
+            print(e)
+
+
+    def getPath(self):
+        path = QFileDialog.getSaveFileUrl()
+        selected_path = path[0].path().split('/')
+        print(selected_path)
+        self.downloadPath = '\\'.join(selected_path[1:-1])
+        self.downloadFilename = selected_path[-1]
+        print(self.downloadPath, self.downloadFilename)
+        self.downloadPath_label.setText(self.downloadPath)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
