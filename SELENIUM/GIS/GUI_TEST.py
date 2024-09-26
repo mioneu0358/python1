@@ -3,7 +3,6 @@ from datetime import datetime
 import sys
 from PyQt5.uic import *
 from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -13,6 +12,7 @@ import pickle
 import os
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import traceback
 
 form_ui = loadUiType("GUI_TEST.ui")[0]
 
@@ -37,12 +37,11 @@ class MainWindow(QMainWindow, form_ui):
         self.sigungu.lineEdit().setAlignment(Qt.AlignCenter)
         self.accidentType.lineEdit().setAlignment(Qt.AlignCenter)
 
-
         self.sido.currentTextChanged.connect(self.changeSigungu)        # 시도 변경시 시군구 변경
         self.runBtn.clicked.connect(self.RUN)                           # 실행 버튼에 함수 연결
         self.path_btn.clicked.connect(self.getPath)
 
-        self.downloadFilename = "accidentInfoList.xlx"
+        self.downloadFilename = "accidentInfoList.xls"
         self.downloadPath = "C:\\Users\\ParkChanBin\\Downloads"
         self.downloadPath_label.setText(self.downloadPath)
         # 연도 범위 설정 ------------------------------------------------------------------------------
@@ -170,6 +169,11 @@ class MainWindow(QMainWindow, form_ui):
         # 콤보박스 중 선택하지 않은 값들이 온 경우 아무것도 하지 않는다.
         if not startYear.isdigit() or not endYear.isdigit() or '선택하시오' in sido or '선택하시오'in sigungu or '선택하시오' in accType:
             print("검색조건 다시 선택")
+            QMessageBox.about(self,"검색 오류","선택되지 못한 조건이 있습니다.")
+            return
+        if not os.path.isdir(self.downloadPath):
+            print("경로 없음")
+            QMessageBox.about(self,"경로 오류","잘못된 다운로드 경로입니다.")
             return
 
         # 사고 경도 체크박스 값 확인
@@ -201,7 +205,7 @@ class MainWindow(QMainWindow, form_ui):
         options = Options()
         # options.add_experimental_option('detach', True)  # 창 자동으로 종료되는 것을 방지
         options.add_argument("disable-blink-features=AutomationControlled")
-        # options.add_argument('headless')
+        options.add_argument('headless')
 
         # 다운로드 경로 변경하기
         options.add_experimental_option("prefs", {
@@ -264,24 +268,32 @@ class MainWindow(QMainWindow, form_ui):
             elem_sago = Select(driver.find_element(By.CSS_SELECTOR, "#ptsRafSimpleCondition"))
             elem_sago.select_by_visible_text(accType)
             print('사고부문 설정 끝')
-
-            # 검색 및 다운로드
             submit_btn = driver.find_element(By.CLASS_NAME, "btn-search")
             submit_btn.click()
-            # 기존의 요소에서 text를 가져옵니다.
-            case_cnt = driver.find_element(By.CSS_SELECTOR,
-                                          "#regionAccidentFind > div.searc-total > div.total-count > span")
-            initial_text = case_cnt.text
 
-            # WebDriverWait을 사용하여 10초 동안 텍스트가 변할 때까지 기다립니다.
-            WebDriverWait(driver, 10).until(lambda driver: case_cnt.text != initial_text)
-            print("기다림 끝")
-            # 텍스트가 변경된 후 새로운 텍스트를 가져옵니다.
-            case_cnt = case_cnt.text
-            print(case_cnt)
-            print(f"건수: {case_cnt.replace(',','')}")
+            # 사고 내역이 없는 경우 경고창이 열리므로 이를 제어한다.
 
-            if int(case_cnt.replace(',','')) != 0:
+            alert_present = WebDriverWait(driver, 5).until(EC.alert_is_present())
+            if alert_present:
+                # 경고 창에 대해 switch_to.alert를 통해 액세스
+                alert = driver.switch_to.alert
+                # 경고 창을 거부(취소)하는 동작 수행
+                alert.accept()
+                QMessageBox.about(self, "알림", "선택한 조건에 해당되는 사건이 없습니다.")
+            else:
+                # 기존의 요소에서 text를 가져옵니다.
+                case_cnt = driver.find_element(By.CSS_SELECTOR,
+                                              "#regionAccidentFind > div.searc-total > div.total-count > span")
+                initial_text = case_cnt.text
+
+                # WebDriverWait을 사용하여 10초 동안 텍스트가 변할 때까지 기다립니다.
+                WebDriverWait(driver, 10).until(lambda driver: case_cnt.text != initial_text)
+                print("기다림 끝")
+                # 텍스트가 변경된 후 새로운 텍스트를 가져옵니다.
+                case_cnt = case_cnt.text
+                print(case_cnt)
+                print(f"건수: {case_cnt.replace(',','')}")
+
                 # 목록 보기 버튼
                 get_data_btn = driver.find_element(By.CSS_SELECTOR,"#regionAccidentFind > div.searc-total > div.btn > p > a")
                 get_data_btn.click()
@@ -294,25 +306,32 @@ class MainWindow(QMainWindow, form_ui):
                 print("다운로드 시작")
                 time.sleep(5)
 
-                while True:
+                for i in range(20):
                     time.sleep(1)
+                    print(self.downloadPath + '\\' + self.downloadFilename)
                     if os.path.isfile(self.downloadPath + '\\' + self.downloadFilename):
                         print("저장 완료")
+                        QMessageBox.about(self,"성공", "다운로드에 성공하였습니다.")
                         break
-                    else:
-                        print("저장 실패")
-        except Exception as e:
-            print(e)
+                else:
+                    print("저장 실패")
+                    QMessageBox.about(self,"실패", "다운로드에 실패하였습니다.")
 
+        except Exception as e:
+            tr = traceback.format_exc()
+            print(tr)
+            print(e)
+            QMessageBox.about(self,"오류 발생", e)
 
     def getPath(self):
         path = QFileDialog.getSaveFileUrl()
         selected_path = path[0].path().split('/')
         print(selected_path)
         self.downloadPath = '\\'.join(selected_path[1:-1])
-        self.downloadFilename = selected_path[-1]
+        # self.downloadFilename = selected_path[-1]
         print(self.downloadPath, self.downloadFilename)
         self.downloadPath_label.setText(self.downloadPath)
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
