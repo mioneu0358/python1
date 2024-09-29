@@ -332,6 +332,9 @@ class MainWindow(QMainWindow, form_ui):
         print(self.downloadPath, self.downloadFilename)
         self.downloadPath_label.setText(self.downloadPath)
 
+# https://disco-railway-5d7.notion.site/108644b8f37380d7858bdb0c5460b88d?pvs=4
+# https://disco-railway-5d7.notion.site/271cef58f5244f5ab47a1f47a7a75461?pvs=4
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
