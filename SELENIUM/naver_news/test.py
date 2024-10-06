@@ -8,6 +8,7 @@ from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from datetime import datetime
+import traceback
 options = Options()
 options.add_experimental_option('detach', True)  # 창 자동으로 종료되는 것을 방지
 options.add_argument("disable-blink-features=AutomationControlled")
@@ -91,3 +92,28 @@ elif period == 8:
     setDate(end)
 
 input()
+
+# todo: 네이버 뉴스 가져오기
+
+news_tab = driver.find_element(By.CSS_SELECTOR,"#main_pack > section.sc_new.sp_nnews._fe_news_collection._prs_nws > div.api_subject_bx > div.group_news > ul")
+naver_news = []
+news_num = 1
+articles = driver.find_elements(By.CSS_SELECTOR, "a.info")
+print(len(articles))
+for article in articles:
+    print(article.get_attribute('title'))
+    print(article.get_attribute('link'))
+while True:
+    try:
+        news = news_tab.find_element(By.ID, f"sp_nws{news_num}")
+        info = news.find_element(By.CSS_SELECTOR,'news_info')
+        urls = info.find_elements(By.CSS_SELECTOR,'a')
+        for url in urls:
+            if 'news.naver.com' in url:
+                print(url)
+        news_num += 1
+    except Exception as e:
+        t = traceback.format_exc()
+        print(e,t)
+        break
+print(naver_news)
