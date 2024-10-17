@@ -111,24 +111,24 @@ for info in info_group:
 
 
 print(naverNewsUrls)
-
-
-
-
 # 4. 다 가져왔다면 리스트 내의 url을 가지고 다시 브라우저를 열기
-# 5. 열린 브라우저 내에서 제목, 날짜, 본문, 댓글들을 가져와 저장하기
+crawled_data = []
+for url in naverNewsUrls:
+    driver.get(url)
+    title = driver.find_element(By.CSS_SELECTOR,'#title_area > span').text
+    date = driver.find_element(By.CSS_SELECTOR,"#ct > div.media_end_head.go_trans > div.media_end_head_info.nv_notrans > div.media_end_head_info_datestamp > div > span").text
+    content = driver.find_element(By.TAG_NAME,'article').text
+    content = ' '.join(content.replace('\n',' ').split())
+    comments = []
+    print(title)
+    print(date)
+    print([content])
+    input()
+    # 댓글 가져오기
+    # 1. 현재 댓글 개수 확인하기 (0개: 건너뛰기, 그 외: 댓글 더보기 버튼 클릭)
+    # 2. 현재 댓글 개수만큼 페이지 내리면서 더보기 버튼 누르기
+    # 3. 다 나왔다면, 리스트에 모든 댓글 추가
 
-input()
-
-
-
-
-
-
-
-
-
-
-
+    # crawled_data에 title, date, content, comments 저장하기
 
 
