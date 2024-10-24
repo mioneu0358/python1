@@ -9,6 +9,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from datetime import datetime
 import traceback
+
 options = Options()
 # options.add_experimental_option('detach', True)  # 창 자동으로 종료되는 것을 방지
 options.add_argument("disable-blink-features=AutomationControlled")
@@ -108,6 +109,7 @@ print(naverNewsUrls)
 
 # 4. 다 가져왔다면 리스트 내의 url을 가지고 다시 브라우저를 열기
 crawled_data = {"title": [],"url":[], "date": [],"content":[], "comments":[]}
+
 for url in naverNewsUrls:
     driver.get(url)
     title = driver.find_element(By.CSS_SELECTOR, '#title_area > span').text
@@ -135,9 +137,10 @@ for url in naverNewsUrls:
                 break
 
         commentList = driver.find_elements(By.CLASS_NAME, "u_cbox_contents")
-        for com in commentList:
-            print(com.text)
-            comments.append(com.text)
+
+        for c in commentList:
+            comments.append(c.text)
+
     # crawled_data에 title, url, date, content, comments 저장하기
         crawled_data["title"].append(title)
         crawled_data["url"].append(url)
@@ -146,14 +149,8 @@ for url in naverNewsUrls:
         crawled_data["comments"].append('\n'.join(comments))
 
 
-    # TODO:
-    #  1. 열 링크,제목,날짜, 본문, 댓글들 엑셀로 저장 하기
-    #  2. 저장된 엑셀 불러오기
-    #  3. 불러온 댓글들에서 명사들로만 이루어진 리스트 생성하기
-
 import pandas as pd
 import datetime
-index = list(range(1,len(crawled_data["title"])+1))                 # 행 번호
 columns = ["title","url","date","content","comments"]               # 각 열 이름
 
 df = pd.DataFrame(crawled_data, columns=columns)
@@ -170,11 +167,21 @@ from konlpy.tag import Okt
 okt = Okt()         # 형태소 분석기
 nouns_comments = []
 
+text = ""
 for commentList in list(loadExcel['comments']):
     comments = commentList.split('\n')
-    nounsList = []
+
+    nounsList = {}
     for comment in comments:
-        nouns = okt.nouns(comment)  # 명사만 추출
-        nounsList.append(nouns)
+        nouns = okt.nouns(comment)  # nouns : 댓글에 들어있던 명사들이 들어있는 리스트
+        text += ' '.join(nouns)
+        print(nouns)
+        for nou in nouns:
+            if nou in nounsList:
+                nounsList[nou] += 1
+            else:
+                nounsList[nou] = 1
     nouns_comments.append(nounsList)
 print(nouns_comments)
+
+# TODO: wordcloud 활용, dataframe 병합 활용
