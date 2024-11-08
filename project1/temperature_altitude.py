@@ -29,28 +29,44 @@ df.to_excel(f"{now.year}_{now.month}_{now.day}_TEMP.xlsx")
 # TODO: 높이를 기준으로 기온, 풍향, 풍속을 도수분포표로 표현 + 각 유형별 그래프 표현하기
 # 기온은 6개 단위로(시작: 0 ~ ???, ??? ~ ????), 맨 밑의 2개의 데이터는 None
 # -999에 대해 처리하기
-
-print(list(df['GH(m)']))
-counts = []
-nine = 0
-for data in list(df['GH(m)']):
-    if data == 'None': continue
-    if data == '-999.0':
-        nine += 1
-    elif nine:
-        counts.append(nine)
-        nine = 0
-        counts.append(data)
-print(counts)
 import numpy as np
-heights = [0]
-for i in range(len(counts)-1):
-    if type(counts[i]) == int:
-        l = heights[-1]
-        r = float(counts[i+1])
-        temp = np.linspace(l,r,counts[i]+2)
-        heights += list(map(int,temp))[1:-1]
-    else:
-         heights.append(int(float(counts[i])))
-print(heights)
+from math import isnan
+pd.set_option('display.max_rows', None)
+
+standard = ['GH(m)', 'TA(C)', 'WD(degree)', 'WS(m/s)']  # 높이, 기온, 풍향, 풍속
+# print(standard)
+parse_df = df.loc[:,standard]
+
+for key in parse_df:
+# 높이 가정치 구하기
+    new_values = [0]                   # 높이 가정치
+    nine = 0
+    for val in parse_df[key]:
+        if val == None or isnan(val): continue
+        if val == -999.0:
+            nine += 1
+        else:
+            last = new_values[-1]
+            s = np.linspace(last, val,nine + 2)
+            new_values += list(map(int,s))[1:-1]
+            nine = 0
+            new_values.append(val)
+
+    #  가정치 대입
+    for i in range(len(new_values)-1):
+        parse_df.loc[i, key] = new_values[i+1]
+# print(parse_df)
+
+row = len(parse_df)         # 마지막 행 번호
+
+# 불필요한 부분(끝 값이 -999.0이거나, NaN인 경우) 제외
+while row > 0:
+    row -= 1
+    if list(map(lambda x: isnan(x) or x == -999.0, parse_df.loc[row])).count(True) == 0:
+        break
+
+parse_df = parse_df.loc[:row, :]
+print(parse_df)
+
+print(list(parse_df.loc[:,"WD(degree)"]))
 
