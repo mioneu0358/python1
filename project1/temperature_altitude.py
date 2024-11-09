@@ -106,3 +106,7 @@ from matplotlib import pyplot as plt
 
 quantile_distribution_df.plot(kind='line')
 plt.show()
+
+# GH를 x축 나머지 데이터 Y축으로 정의, 
+# Y축 데이터를 행 기준 3분할, Y축 데이터는 범위를 꽉채우는 막대그래프로 표현, 동시에 막대의 중앙점들을 이은 선 표현,
+# 선 옆에는 정확한 수치 표현해주기
