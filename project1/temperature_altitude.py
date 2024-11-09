@@ -1,6 +1,9 @@
 import requests
 from datetime import datetime
-import json
+import pandas as pd
+import numpy as np
+from math import isnan
+
 now = datetime.now()
 tm = input("조회시간을 입력하시오(YYYYMMDDHHMI): ") or now.strftime("%Y%m%d")+'0000'  #
 # print(tm)
@@ -19,38 +22,37 @@ print(response)
 response = response.replace('\n\n','\n').split('\n')
 # print(response)
 a1,a2 = response[1:3]
-import pandas as pd
 index = list(map(lambda x: x[0]+f'({x[1]})',zip(a1.split(), a2.split())))[1:]
 # print(index)
 df = pd.DataFrame(data=list(map(lambda x: x.split(), response[3:])),columns= index)
 df.to_excel(f"{now.year}_{now.month}_{now.day}_TEMP.xlsx")
 # 날짜: YYMMDDHHMI   지점번호:STN      등압면:PA      높이: GH      기온: TA      이슬점 온도: TD     풍향: WD     풍속: WS
 
-# TODO: 높이를 기준으로 기온, 풍향, 풍속을 도수분포표로 표현 + 각 유형별 그래프 표현하기
-# 기온은 6개 단위로(시작: 0 ~ ???, ??? ~ ????), 맨 밑의 2개의 데이터는 None
-# -999에 대해 처리하기
+
+import pandas as pd
 import numpy as np
 from math import isnan
+
 pd.set_option('display.max_rows', None)
 
 standard = ['GH(m)', 'TA(C)', 'WD(degree)', 'WS(m/s)']  # 높이, 기온, 풍향, 풍속
 # print(standard)
-parse_df = df.loc[:,standard]
+parse_df = df.loc[ : ,standard]
 
 for key in parse_df:
 # 높이 가정치 구하기
     new_values = [0]                   # 높이 가정치
     nine = 0
     for val in parse_df[key]:
-        if val == None or isnan(val): continue
-        if val == -999.0:
+        if val == None or isnan(float(val)): continue
+        if val == '-999.0':
             nine += 1
         else:
             last = new_values[-1]
-            s = np.linspace(last, val,nine + 2)
+            s = np.linspace(last, float(val),nine + 2)
             new_values += list(map(int,s))[1:-1]
             nine = 0
-            new_values.append(val)
+            new_values.append(float(val))
 
     #  가정치 대입
     for i in range(len(new_values)-1):
@@ -62,11 +64,45 @@ row = len(parse_df)         # 마지막 행 번호
 # 불필요한 부분(끝 값이 -999.0이거나, NaN인 경우) 제외
 while row > 0:
     row -= 1
-    if list(map(lambda x: isnan(x) or x == -999.0, parse_df.loc[row])).count(True) == 0:
+    if list(map(lambda x: x is None or x == '-999.0' or isnan(x) , parse_df.loc[row])).count(True) == 0:
         break
 
 parse_df = parse_df.loc[:row, :]
 print(parse_df)
+#
+# 'GH(m)' 열의 실제 값에 기반하여 데이터의 범위를 6개의 구간으로 나누고,
+# 각 구간에 대해 'TA(C)', 'WD(degree)', 'WS(m/s)'의 평균값을 구하는 코드
 
-print(list(parse_df.loc[:,"WD(degree)"]))
+# 1. 'GH(m)' 열의 값에 따른 0, 20%, 40%, 60%, 80%, 100% 분위수를 계산하여 구간 경계를 정합니다.
+quantiles = [0] + list(np.quantile(parse_df['GH(m)'].dropna(), [0, 0.2, 0.4, 0.6, 0.8, 1]))
 
+# 2. 각 구간을 (하한, 상한) 형태로 저장하여 구간 리스트를 만듭니다.
+range_intervals = [(quantiles[i], quantiles[i + 1]) for i in range(len(quantiles) - 1)]
+# print(range_intervals)
+results_quantile_based = []
+
+# 3. 각 구간별로 'TA(C)', 'WD(degree)', 'WS(m/s)'의 평균을 계산합니다.
+for lower, upper in range_intervals:
+    # 'GH(m)' 값이 해당 구간에 속하는 데이터만 선택
+    range_df = parse_df[(parse_df['GH(m)'] > lower) & (parse_df['GH(m)'] <= upper)]
+    ta_mean = range_df['TA(C)'].mean()  # 선택된 구간 내 기온(TA(C))의 평균값
+    wd_mean = range_df['WD(degree)'].mean()  # 선택된 구간 내 풍향(WD(degree))의 평균값
+    ws_mean = range_df['WS(m/s)'].mean()  # 선택된 구간 내 풍속(WS(m/s))의 평균값
+
+    # 결과를 리스트에 저장
+    results_quantile_based.append({
+        'Height Range (GH(m))': f"{lower:.1f} - {upper:.1f}",  # 구간 표시
+        'Mean TA(C)': ta_mean,  # 해당 구간 내 기온 평균
+        'Mean WD(degree)': wd_mean,  # 해당 구간 내 풍향 평균
+        'Mean WS(m/s)': ws_mean  # 해당 구간 내 풍속 평균
+    })
+
+
+# 완성된 도수분포표
+quantile_distribution_df = pd.DataFrame(results_quantile_based)
+print(quantile_distribution_df)
+
+from matplotlib import pyplot as plt
+
+quantile_distribution_df.plot(kind='line')
+plt.show()
