@@ -30,3 +30,10 @@ def check_answer(question_id):
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+# TODO: db를 만들기 위해 단어 딕셔너리 만들기
+# {카테고리: {단어: 내용, ...}, ...} 형태로 저장
+# 저장된 데이터 DB에 할당하기
+# 나중에는 DB서버를 따로 만들어 불러오는 방식으로 사용
+
