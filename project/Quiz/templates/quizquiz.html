@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Quiz Question</title>
+    <style>
+        /* 타이머 바 스타일 */
+        #timer-bar { width: 100%; height: 20px; background-color: #e0e0e0; margin: 20px 0; }
+        #timer-progress { height: 100%; background-color: #76c7c0; transition: width 0.1s linear; }
+    </style>
+</head>
+<body>
+    <h1>Quiz Question</h1>
+    <p>{{ q }}는 몇번째 알파벳인가요?</p>
+
+    <!-- 타이머 표시 -->
+    <div id="timer-bar">
+        <div id="timer-progress"></div>
+    </div>
+    <p>Time left: <span id="timer-text">10</span> seconds</p>
+
+    <!-- 퀴즈 문제 제출 폼 -->
+<form id="quiz-form" action="{{ url_for('check_answer', question_id=q) }}" method="post">
+        <label for="answer">Your Answer:</label>
+        <input type="text" id="answer" name="answer" required>
+        <button type="submit">Submit</button>
+    </form>
+
+    <script>
+        let timeLeft = 10;  // 타이머 시작 시간 (10초)
+        const timerText = document.getElementById('timer-text');  // 남은 시간 표시
+        const timerProgress = document.getElementById('timer-progress');  // 타이머 바
+        const quizForm = document.getElementById('quiz-form');  // 퀴즈 폼
+
+        function updateTimer() {
+            // 1초 감소
+            timeLeft--;
+            timerText.textContent = timeLeft;
+
+            // 타이머 바의 너비 업데이트
+            timerProgress.style.width = `${(timeLeft / 10) * 100}%`;
+
+            // 시간이 다 되었을 경우 폼 자동 제출
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);  // 타이머 정지
+                alert("시간 초과! 10초 안에 정답을 입력해주세요");
+                quizForm.submit();  // 시간 초과로 자동 제출
+            }
+        }
+
+        // 1초 간격으로 타이머 업데이트
+        const timerInterval = setInterval(updateTimer, 1000);
+    </script>
+</body>
+</html>
