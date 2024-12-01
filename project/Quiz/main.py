@@ -1,9 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for
-
+from models.db_access import DB_access
 app = Flask(__name__)
 
-# 데이터 (A=1, B=2, ..., Z=26)
-data = {chr(i): i - 64 for i in range(65, 91)}  # A-Z 알파벳 데이터
 
 @app.route('/')
 def index():
@@ -31,9 +29,3 @@ def check_answer(question_id):
 if __name__ == '__main__':
     app.run(debug=True)
 
-
-# TODO: db를 만들기 위해 단어 딕셔너리 만들기
-# {카테고리: {단어: 내용, ...}, ...} 형태로 저장
-# 저장된 데이터 DB에 할당하기
-# 나중에는 DB서버를 따로 만들어 불러오는 방식으로 사용
-# 한국어 단어 가져올 사이트: "https://ko.wiktionary.org/wiki/분류:한국어_명사"
