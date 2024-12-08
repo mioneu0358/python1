@@ -1,5 +1,6 @@
+from models.download_korean import get_korean
 import sqlite3
-from test_Db import korean_db
+import os
 DB_name = "test.db"
 
 class DB_interface:
@@ -26,12 +27,12 @@ class DB_interface:
         self.cursor.execute(query,params)
         return self.cursor.fetchall()
 
-_initialzed = False
+
 
 def initialize_db():
-    global _initialzed
     # 코드 실행중에 한번만 실행되도록 만든다.
-    if _initialzed:
+    print(os.path.isfile(DB_name))
+    if os.path.isfile(DB_name):
        return
     # DB가 있던 없던, DB를 초기화하는 작업을 해준다.
     # DB가 없다면 해당 DB의 테이블 생성
@@ -46,28 +47,28 @@ def initialize_db():
     db.connect()
 
     db.execute_query("""
-        CREATE TABLE IF NOT EXISTS Korean (
+        CREATE TABLE IF NOT EXISTS Quiz (
             Q_id       INTEGER PRIMARY KEY AUTOINCREMENT, -- 문제 번호
+            category   TEXT NOT NULL,                     -- 문제 유형
             word       TEXT NOT NULL,                     -- 단어
             word_exp   TEXT NOT NULL                      -- 단어 설명
         )
     """)
+    print("한글 단어 가져오기 -----------------------------------------------------------")
+    korean_data = get_korean()
+    print(korean_data)
 
-    for word_dict in korean_db:
-        word = word_dict['표제어']
-        word_exp = word_dict['뜻풀이']
+    for word,word_exp in korean_data.items():
         db.execute_query("""
-            INSERT INTO Korean (word, word_exp)
-            VALUES( ?, ?)
+            INSERT INTO Quiz (category, word, word_exp)
+            VALUES ("korean", ?, ?)
         """, word, word_exp)
 
-    ret = db.fetch_query("SELECT * FROM sqlite_schema")
+    ret = db.fetch_query("SELECT * FROM Quiz")
     for r in ret:
-        print(r[4])
+        print(r)
 
     # DB 연결 해제
     db.disconnect()
-
-    _initialized = True
 
 initialize_db()
