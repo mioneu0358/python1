@@ -1,3 +1,5 @@
+
+
 class Human:
     # 혈액형의 유전 정보를 딕셔너리로 정의
     ABO_bloodType = {
@@ -56,7 +58,6 @@ class Human:
                     for gene_dad in dad:
                         for gene_mom in mom:
                             possible_bloodtypes.add(''.join(sorted((gene_dad, gene_mom))))
-
 
         # 어머니 정해져 있는 경우
         elif type(Dad_bloodType) == list :
