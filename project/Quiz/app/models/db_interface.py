@@ -1,4 +1,4 @@
-from app.models.download_korean import get_korean
+from app.models.download_korean import get_korean,get_english
 import sqlite3
 import os
 DB_name = "test.db"
@@ -57,6 +57,20 @@ def initialize_db():
     print("한글 단어 가져오기 -----------------------------------------------------------")
     korean_data = get_korean()
     print(korean_data)
+    for word,word_exp in korean_data.items():
+        db.execute_query("""
+            INSERT INTO Quiz (category, word, word_exp)
+            VALUES ("korean", ?, ?)
+        """, word, word_exp)
+
+    print("영어 단어 가져오기-------------------------------------------------------------")
+    english_data = get_english()
+    print(english_data)
+    for word, word_exp in english_data.items():
+        db.execute_query("""
+            INSERT INTO Quiz (category, word, word_exp)
+            VALUES("english", ?, ?)
+        """,word, ' '.join(word_exp))
 
 
     db.execute_query("""
@@ -66,12 +80,6 @@ def initialize_db():
             user_pw      BLOB                               -- User의 비밀번호
         )          
     """)
-    for word,word_exp in korean_data.items():
-        db.execute_query("""
-            INSERT INTO Quiz (category, word, word_exp)
-            VALUES ("korean", ?, ?)
-        """, word, word_exp)
-
     ret = db.fetch_query("SELECT * FROM Quiz")
     for r in ret:
         print(r)
