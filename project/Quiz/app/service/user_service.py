@@ -37,11 +37,13 @@ class UserService:
                 'msg': '비밀번호를 틀렸습니다.'
             }
         # 4. 세션 부여
+        user_data.update({'total_cnt': 0, "correct_cnt":0}) # 푼 문제 수, 맞춘 문제 수
+        print(user_data)
         session['user'] = user_data  # 쿠키 데이터
         return {'state': 'success'}
 
-
-    def session_check(self):
+    @classmethod
+    def session_check(cls):
         """
         현재 접속자의 세션 유무 확인
         """
@@ -49,9 +51,21 @@ class UserService:
             return {'state': 'success'}
         else:
             return {'state': 'fail'}
-
-    def get_user(self):
+    @classmethod
+    def get_user(cls):
         return session.get('user')
+
+    @classmethod
+    def total_cnt_plus(cls):
+        user_data = cls.get_user()
+        user_data['total_cnt'] += 1
+        session['user'] = cls.get_user()
+
+    @classmethod
+    def correct_cnt_plus(cls):
+        user_data = cls.get_user()
+        user_data['correct_cnt'] += 1
+        session['user'] = cls.get_user()
 
     def logout(self):
         """

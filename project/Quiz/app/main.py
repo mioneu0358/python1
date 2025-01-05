@@ -5,10 +5,14 @@ import os
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
-
+# TODO: 세션 체크
 @app.route('/')
 def index():
-    print("홈페이지")
+    user_data = UserService.get_user()
+    print(f"/ user_data: {user_data}")
+    # if user_data:
+    #     return render_template('home.html', user_data = user_data)
+    # else:
     return render_template('home.html')
 
 
@@ -60,9 +64,6 @@ def register():
             'register.html',
             error_msg="모든 필드를 입력해주세요."
         )
-
-    db = DB_access()
-
     user_service = UserService()
     try:
         user_service.registration(user_id, user_pw)
@@ -85,8 +86,12 @@ def register():
 @app.route('/solve/<category>', methods=['GET'])
 def quiz(category):
     db = DB_access()
+    # session에 들어있는 유저 정보의 푼 문제 수의 값 증가
+    UserService.total_cnt_plus()
+    user_data = UserService.get_user()
+    print(f"solve/{category} user_data: {user_data}")
     q_id,q_category, word,word_exp = db.get_quiz_data(category)
-    wrong_words = db.get_word_wrong_answer(q_id)
+    wrong_words = db.get_word_wrong_answer(q_id,category)
     print(f"q_id: {q_id}, word: {word}, word_exp: {word_exp}")
     print(f"wrong_words : {wrong_words}")
     example = list({word, *wrong_words})
@@ -102,9 +107,11 @@ def check_answer(q_id):
         q_id, category, word, word_exp = result
         print(f"correct_answer: {word}")
         if user_answer == word:  # 정답 확인
-            return render_template('correct.html', category = category)  # 정답 시
+            # session에 들어있는 유저정보의 맞춘개수 증가
+            UserService.correct_cnt_plus()
+            return render_template('correct.html', category = category, word=word, word_exp = word_exp)  # 정답 시
         else:
-            return render_template('fail.html', answer=word,exp = word_exp, category=category)  # 오답 시 정답 출력
+            return render_template('fail.html', answer=word,exp = word_exp, category=category, wrong_answer = user_answer)  # 오답 시 정답 출력
 
 if __name__ == '__main__':
     app.run(debug=True)

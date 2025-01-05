@@ -15,12 +15,12 @@ class DB_access:
             print("결과 없음")
             return None
 
-    def get_word_wrong_answer(self, q_id):
+    def get_word_wrong_answer(self, q_id,category):
         db = DB_interface()
         db.connect()
         result = db.fetch_query("""
-            SELECT word FROM Quiz WHERE q_id != ? ORDER BY RANDOM() LIMIT 3;
-        """,q_id)
+            SELECT word FROM Quiz WHERE q_id != ? AND category = ? ORDER BY RANDOM() LIMIT 3;
+        """,q_id,category)
 
         if result:
             print(f"get_word_wrong_answer: {result}")

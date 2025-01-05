@@ -99,7 +99,7 @@
             </div>
             <div>
                 {% if session.user %}
-                    <span>안녕하세요, {{ session.user.user_id }}님!</span>
+                    <span>안녕하세요,{{ session.user.user_id }}님! 반갑습니다.</span>
                     <form action="/logout" method="post" style="display: inline;">
                         <button type="submit" class="logout-btn">로그아웃</button>
                     </form>
@@ -111,8 +111,10 @@
         </div>
      <div class="container">
         {% if session.user %}
-            <p>안녕하세요, {{ session.user.user_id }}님! 원하는 페이지로 이동하세요.</p><br>
-            <a href="/solve/korean">국어 단어 맞추기</a>
+            <h3>안녕하세요, {{ session.user.user_id }}님!</h3>
+            <p>문제 시도 횟수: {{ session.user.total_cnt }}회</p>
+            <p>맞춘 횟수: {{session.user.correct_cnt }}회</p>
+            <a href="/solve/korean">국어 단어 맞추기</a><br>
             <a href="/solve/english">영어 단어 맞추기</a>
         {% else %}
             <form action="/login" method="post">
@@ -120,7 +122,7 @@
                 <input type="password" name="user_pw" placeholder="비밀번호 입력" required><br>
                 <button type="submit">로그인</button>
             </form>
-            <a href="/student/register">회원가입 하기</a>
+            <a href="/register">회원가입 하기</a>
         {% endif %}
 
         {% if login_status == 'fail' %}
