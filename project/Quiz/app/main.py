@@ -13,8 +13,8 @@ def index():
     # if user_data:
     #     return render_template('home.html', user_data = user_data)
     # else:
-    return render_template('home.html')
 
+    return render_template('home.html')
 
 @app.route('/login', methods=["POST"])
 def login():
