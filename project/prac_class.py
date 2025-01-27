@@ -67,7 +67,7 @@ class School:
                     std.set_grade(kor,eng,math)
                     std_grade = int(age) - 16
                     self.school_info[f"{std_grade}학년"][f"{cls_num}반"]['std_info'].append(std)
-        print(self.school_info)
+        # print(self.school_info)
     def show_class_avg(self):
         result = {}
         for grade, all_class in self.school_info.items():
@@ -78,8 +78,14 @@ class School:
                     cls_avg += std.get_average()
                 cls_avg /= len(cls_info['std_info'])
                 result[grade][cls_num] = round(cls_avg,2)
+        print(result)
         for grade in result:
             print(f"{grade} 반 평균 성적")
+            cls_info = result[grade]
+            sorted_cls_info = sorted(cls_info.items(),key=lambda x: x[1],reverse=True)
+            for cls_num, score in sorted_cls_info:
+                print(f"{cls_num}: {score}점",end= '  ')
+            print()
 
 myschool = School()
 myschool.set_info()
@@ -87,6 +93,7 @@ myschool.show_class_avg()
 
 
 # Human_info.txt
+
 # 김민준 17 학생 1 87 92 75
 # 이서연 17 학생 1 78 85 90
 # 박지훈 17 학생 1 92 74 88
