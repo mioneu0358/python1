@@ -101,13 +101,13 @@ class mainWindow(QMainWindow):
 
         # Frame3 ---------------------------------------------------------------------------------------------------
         label_query = self.makeLabel(frame3, 0, 0, 550, 50, "질의문 작성", bd=2)
-        self.text_query = QLineEdit(frame3)
+        self.line_query = QLineEdit(frame3)
 
-        self.text_query.setGeometry(2, 50, 440, 250)
+        self.line_query.setGeometry(2, 50, 440, 250)
         font_query = QFont()
         font_query.setPointSize(20)
-        self.text_query.setPlaceholderText("상세한 설명을 적어주세요.")
-        self.text_query.setFont(font_query)
+        self.line_query.setPlaceholderText("상세한 설명을 적어주세요.")
+        self.line_query.setFont(font_query)
 
         self.btn_run = self.makeButton(frame3, 440, 50, 108, 250, "GPT에\n요청\n하기",
                                                       self.request_GPT)
@@ -218,8 +218,12 @@ class mainWindow(QMainWindow):
         self.line_music_instrument.clear()
 
     def request_GPT(self):
+        #TODO: self.scrollbar_music_instrument에서 선택한 항목들 + self.line_bpm + self.combo_genre + self.lyrics + self.line_query값 불러오기
+        # + 규현이가 정의한 쿼리에 정리해서 GPT에 요청후 값 받아오기
+        
+        
         return
-    
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
