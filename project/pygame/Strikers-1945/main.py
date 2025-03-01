@@ -128,51 +128,56 @@ class Charcter:
 
 # 게임 실행 페이지 함수
 def game_execution_page():
-    to_x = 0
-    to_y = 0
     char = Charcter()
-    bullet_info = deque()
+    bullet_info = deque()  # 총알 정보를 저장하는 큐
+
+    # 마지막 총알 발사 시간 초기화
+    last_shot_time = pygame.time.get_ticks()
+    fire_rate = 300  # 발사 간격을 300ms (0.3초)로 설정
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_UP:
-                    to_y -= char.speed
-                elif event.key == pygame.K_DOWN:
-                    to_y += char.speed
-                if event.key == pygame.K_LEFT:
-                    to_x -= char.speed
-                elif event.key == pygame.K_RIGHT:
-                    to_x += char.speed
-            if event.type == pygame.KEYUP:
-                if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT or event.key == pygame.K_UP or event.key == pygame.K_DOWN:
-                    to_x = 0
-                    to_y = 0
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_a:
-                    bullet = char.shoot()
-                    bullet_info.append(bullet)
 
-        char.x += to_x
-        char.y += to_y
+        keys = pygame.key.get_pressed()
 
+        # x, y 축 이동 (대각선 이동을 고려하여 속도 분배)
+        if keys[pygame.K_LEFT]:
+            char.x -= char.speed
+        if keys[pygame.K_RIGHT]:
+            char.x += char.speed
+        if keys[pygame.K_UP]:
+            char.y -= char.speed
+        if keys[pygame.K_DOWN]:
+            char.y += char.speed
+
+        # 'a' 키를 눌렀을 때 총알 발사, 발사 간격을 체크
+        if keys[pygame.K_a]:
+            current_time = pygame.time.get_ticks()  # 현재 시간
+            if current_time - last_shot_time >= fire_rate:  # 발사 간격 체크
+                bullet = char.shoot()
+                bullet_info.append(bullet)  # 총알을 큐에 추가
+                last_shot_time = current_time  # 마지막 발사 시간을 현재 시간으로 갱신
+
+        # 총알 이동 (y축으로 이동)
         for _ in range(len(bullet_info)):
-            bullet = bullet_info.popleft()
-            bullet.y -= bullet.speed
-            if bullet.y >= 0:
-                bullet_info.append(bullet)
+            bullet = bullet_info.popleft()  # 큐에서 하나씩 가져옴
+            bullet.y -= bullet.speed  # 총알을 위로 이동
+            if bullet.y >= 0:  # 화면 밖으로 나가지 않도록
+                bullet_info.append(bullet)  # 총알이 화면에 남아 있으면 큐에 다시 추가
 
+        # 화면을 채우기 전에 배경을 그리기
         screen.fill((100, 100, 100))  # 배경 진회색
 
-        screen.blit(char.char_icon,(char.x ,char.y))
-        for i in range(len(bullet_info)):
-            screen.blit(bullet_info[i].icon, (bullet_info[i].x, bullet_info[i].y))
+        # 캐릭터와 총알을 화면에 그리기
+        screen.blit(char.char_icon, (char.x, char.y))
+        for bullet in bullet_info:
+            screen.blit(bullet.icon, (bullet.x, bullet.y))
 
         pygame.display.flip()
         clock.tick(60)
-
 
 def end_page():
     pass
