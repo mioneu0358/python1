@@ -1,13 +1,15 @@
 import os
 from collections import deque
-
+import random
 import pygame
 import sys
 
 # Pygame 초기화
 pygame.init()
-screen = pygame.display.set_mode((1080, 720))
-pygame.display.set_caption("mySTRIKERS 1945")
+screen_width =1080
+screen_height = 720
+screen = pygame.display.set_mode((screen_width,screen_height))
+pygame.display.set_caption("MY STRIKERS 1945")
 clock = pygame.time.Clock()
 
 
@@ -23,10 +25,10 @@ def start_page():
     last_blink_time = pygame.time.get_ticks()  # 마지막 깜빡임 시간 기록
     blink_interval = 500  # 깜빡임 간격 (밀리초 단위, 500ms = 0.5초)
     while True:
-        current_time = pygame.time.get_ticks()
-        if current_time - last_blink_time > blink_interval:
+        player_current_time = pygame.time.get_ticks()
+        if player_current_time - last_blink_time > blink_interval:
             blink = not blink
-            last_blink_time = current_time
+            last_blink_time = player_current_time
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -59,11 +61,11 @@ def character_selection_page():
     last_blink_time = pygame.time.get_ticks()  # 마지막 깜빡임 시간 기록
     blink_interval = 500  # 깜빡임 간격 (밀리초 단위, 500ms = 0.5초)
     while True:
-        current_time = pygame.time.get_ticks()
-        if current_time - last_blink_time > blink_interval:
+        player_current_time = pygame.time.get_ticks()
+        if player_current_time - last_blink_time > blink_interval:
             select_sec -= 0.5
             blink = not blink
-            last_blink_time = current_time
+            last_blink_time = player_current_time
             if select_sec == 0:
                 return
         for event in pygame.event.get():
@@ -97,30 +99,73 @@ def character_selection_page():
         clock.tick(60)
 
 class Bullet:
-    def __init__(self,char_x,char_y,char_w, char_h):
+    def __init__(self,char_x,char_y,char_w, char_h,mx,my):
         self.icon = pygame.image.load("images/bullet.png")
         self.width = self.icon.get_width()
         self.height = self.icon.get_height()
         self.x = char_x+(char_w // 2)
         self.y = char_y
         self.speed = 5
+        self.mx = mx
+        self.my = my
+
+    def move(self):
+        self.x += self.mx * self.speed
+        self.y += self.my * self.speed
 
 
 
 class Charcter:
     def __init__(self):
         self.selected_char = selected_char
-        self.health = 100
-        self.char_icon = pygame.image.load(f"images/{char_list[selected_char].replace('CHAR_','')}")   # 55 x 40
-        self.width = self.char_icon.get_width()
-        self.height = self.char_icon.get_height()
+        self.health = 3
+        self.icon = pygame.image.load(f"images/{char_list[selected_char].replace('CHAR_','')}")   # 55 x 40
+        self.width = self.icon.get_width()
+        self.height = self.icon.get_height()
         self.x = screen.get_width()//2-self.width
         self.y = screen.get_height()-self.height
         self.speed = 5
 
     def shoot(self):
-        bullet = Bullet(self.x,self.y,self.width,self.height)
+        bullet = Bullet(self.x,self.y,self.width,self.height,0,-1)
         return bullet
+
+    def ult(self):
+        pass
+
+
+class Enemy:
+    def __init__(self):
+        self.selected_char = selected_char
+        self.health = 100
+        self.icon = pygame.image.load(f"images/enemy_syumi.png")   # 55 x 40
+        self.width = self.icon.get_width()
+        self.height = self.icon.get_height()
+        self.x = (screen.get_width()//2)-(self.width//2)
+        self.y = 0
+        self.speed = 3
+        self.dir_ = -1
+        self.movement = deque()
+
+    def shoot(self):
+        bullet = Bullet(self.x,self.y+self.height,self.width,self.height,0,1)
+        return bullet
+
+    def random_move(self):
+        if self.movement:
+            self.x += self.movement.popleft()
+            if self.x < 0:
+                self.x = 0
+                self.movement.clear()
+            elif self.x + self.width > screen_width:
+                self.x = screen_width - self.width
+                self.movement.clear()
+
+        else:
+            random_move = self.speed if random.randint(0,1)  else -self.speed
+            for _ in range(random.randint(30,40)):
+                self.movement.append(random_move)
+
 
     def ult(self):
         pass
@@ -129,11 +174,14 @@ class Charcter:
 # 게임 실행 페이지 함수
 def game_execution_page():
     char = Charcter()
-    bullet_info = deque()  # 총알 정보를 저장하는 큐
-
+    boss = Enemy()
+    player_bullet_info = deque()  # 총알 정보를 저장하는 큐
+    enemy_bullet_info = deque()
     # 마지막 총알 발사 시간 초기화
-    last_shot_time = pygame.time.get_ticks()
-    fire_rate = 300  # 발사 간격을 300ms (0.3초)로 설정
+    player_last_shot_time = pygame.time.get_ticks()
+    player_fire_rate = 300  # 발사 간격을 300ms (0.3초)로 설정
+    enemy_last_shot_time = pygame.time.get_ticks()
+    enemy_fire_rate = random.randint(200,400)
 
     while True:
         for event in pygame.event.get():
@@ -153,27 +201,50 @@ def game_execution_page():
         if keys[pygame.K_DOWN]:
             char.y += char.speed
 
+        # 캐릭터 화면 밖으로 나가는 작업 방지
+        if char.x < 0: char.x = 0
+        elif char.x + char.width > screen_width: char.x = screen_width-char.width
+        if char.y < 0: char.y = 0
+        elif char.y + char.height > screen_height: char.y = screen_height - char.height
+
         # 'a' 키를 눌렀을 때 총알 발사, 발사 간격을 체크
         if keys[pygame.K_a]:
-            current_time = pygame.time.get_ticks()  # 현재 시간
-            if current_time - last_shot_time >= fire_rate:  # 발사 간격 체크
+            player_current_time = pygame.time.get_ticks()  # 현재 시간
+            if player_current_time - player_last_shot_time >= player_fire_rate:  # 발사 간격 체크
                 bullet = char.shoot()
-                bullet_info.append(bullet)  # 총알을 큐에 추가
-                last_shot_time = current_time  # 마지막 발사 시간을 현재 시간으로 갱신
+                player_bullet_info.append(bullet)  # 총알을 큐에 추가
+                player_last_shot_time = player_current_time  # 마지막 발사 시간을 현재 시간으로 갱신
 
         # 총알 이동 (y축으로 이동)
-        for _ in range(len(bullet_info)):
-            bullet = bullet_info.popleft()  # 큐에서 하나씩 가져옴
-            bullet.y -= bullet.speed  # 총알을 위로 이동
-            if bullet.y >= 0:  # 화면 밖으로 나가지 않도록
-                bullet_info.append(bullet)  # 총알이 화면에 남아 있으면 큐에 다시 추가
+        for _ in range(len(player_bullet_info)):
+            bullet = player_bullet_info.popleft()  # 큐에서 하나씩 가져옴
+            bullet.move()                          # 총알을 위로 이동
+            if bullet.y >= 0:                      # 화면 밖으로 나가지 않도록
+                player_bullet_info.append(bullet)  # 총알이 화면에 남아 있으면 큐에 다시 추가
+
+
+        enemy_current_time = pygame.time.get_ticks()  # 현재 시간
+        if enemy_current_time - enemy_last_shot_time >= enemy_fire_rate:  # 발사 간격 체크
+            bullet = boss.shoot()
+            enemy_bullet_info.append(bullet)  # 총알을 큐에 추가
+            enemy_last_shot_time = enemy_current_time  # 마지막 발사 시간을 현재 시간으로 갱신
+
+        for _ in range(len(enemy_bullet_info)):
+            bullet = enemy_bullet_info.popleft()  # 큐에서 하나씩 가져옴
+            bullet.move()  # 총알을 아래로
+            if bullet.y <= screen_height:  # 화면 밖으로 나가지 않도록
+                player_bullet_info.append(bullet)  # 총알이 화면에 남아 있으면 큐에 다시 추가
+
+
 
         # 화면을 채우기 전에 배경을 그리기
         screen.fill((100, 100, 100))  # 배경 진회색
 
         # 캐릭터와 총알을 화면에 그리기
-        screen.blit(char.char_icon, (char.x, char.y))
-        for bullet in bullet_info:
+        boss.random_move()
+        screen.blit(boss.icon, (boss.x,boss.y))
+        screen.blit(char.icon, (char.x, char.y))
+        for bullet in player_bullet_info:
             screen.blit(bullet.icon, (bullet.x, bullet.y))
 
         pygame.display.flip()
