@@ -98,90 +98,89 @@ def character_selection_page():
         pygame.display.flip()
         clock.tick(60)
 
-class Bullet:
-    def __init__(self,char_x,char_y,char_w, char_h,mx,my):
-        self.icon = pygame.image.load("images/bullet.png")
+
+class Plane:
+    def __init__(self, image_path, x, y, speed, health):
+        self.icon = pygame.image.load(image_path)
         self.width = self.icon.get_width()
         self.height = self.icon.get_height()
-        self.x = char_x+(char_w // 2)
-        self.y = char_y
-        self.speed = 5
-        self.mx = mx
-        self.my = my
+        self.x = x
+        self.y = y
+        self.speed = speed
+        self.health = health
 
-    def move(self):
-        self.x += self.mx * self.speed
-        self.y += self.my * self.speed
+    def draw(self, screen):
+        screen.blit(self.icon, (self.x, self.y))
 
+    def move(self, dx, dy):
+        self.x += dx * self.speed
+        self.y += dy * self.speed
 
+    def shoot(self, target_x=None, target_y=None, speed=5):
+        return Bullet(self.x, self.y, self.width, self.height, target_x, target_y, speed)
 
-class Charcter:
+class Player(Plane):
     def __init__(self):
-        self.selected_char = selected_char
-        self.health = 3
-        self.icon = pygame.image.load(f"images/{char_list[selected_char].replace('CHAR_','')}")   # 55 x 40
-        self.width = self.icon.get_width()
-        self.height = self.icon.get_height()
-        self.x = screen.get_width()//2-self.width
-        self.y = screen.get_height()-self.height
-        self.speed = 5
+        super().__init__(f"images/{char_list[selected_char].replace('CHAR_', '')}",
+                         screen.get_width()//2,
+                         screen.get_height() - 60,
+                         speed=5,
+                         health=3)
 
-    def shoot(self):
-        bullet = Bullet(self.x,self.y,self.width,self.height,0,-1)
-        return bullet
-
-    def ult(self):
-        pass
-
-
-class Enemy:
+class Enemy(Plane):
     def __init__(self):
-        self.selected_char = selected_char
-        self.health = 100
-        self.icon = pygame.image.load(f"images/enemy_syumi.png")   # 55 x 40
-        self.width = self.icon.get_width()
-        self.height = self.icon.get_height()
-        self.x = (screen.get_width()//2)-(self.width//2)
-        self.y = 0
-        self.speed = 3
-        self.dir_ = -1
+        super().__init__("images/enemy_syumi.png",
+                         screen.get_width()//2 - 27,
+                         0,
+                         speed=3,
+                         health=100)
         self.movement = deque()
-
-    def shoot(self):
-        bullet = Bullet(self.x,self.y+self.height,self.width,self.height,0,1)
-        return bullet
 
     def random_move(self):
         if self.movement:
             self.x += self.movement.popleft()
-            if self.x < 0:
-                self.x = 0
+            if self.x < 0 or self.x + self.width > screen_width:
                 self.movement.clear()
-            elif self.x + self.width > screen_width:
-                self.x = screen_width - self.width
-                self.movement.clear()
-
         else:
-            random_move = self.speed if random.randint(0,1)  else -self.speed
-            for _ in range(random.randint(30,40)):
-                self.movement.append(random_move)
+            direction = self.speed if random.randint(0, 1) else -self.speed
+            self.movement.extend([direction] * random.randint(30, 40))
 
+    def aim_and_shoot(self, player_x, player_y):
+        return self.shoot(player_x, player_y, speed=5)  # 일정한 속도로 고정
 
-    def ult(self):
-        pass
+class Bullet:
+    def __init__(self, char_x, char_y, char_w, char_h, target_x=None, target_y=None, speed=5):
+        self.icon = pygame.image.load("images/bullet.png")
+        self.width = self.icon.get_width()
+        self.height = self.icon.get_height()
+        self.x = char_x + (char_w // 2)
+        self.y = char_y
+        self.speed = speed
 
+        if target_x is not None and target_y is not None:
+            # 방향 벡터 계산
+            dx = target_x - self.x
+            dy = target_y - self.y
+            length = (dx**2 + dy**2)**0.5
+            self.mx = dx / length * speed
+            self.my = dy / length * speed
+        else:
+            self.mx = 0
+            self.my = -speed  # 기본 위로 발사
 
-# 게임 실행 페이지 함수
+    def move(self):
+        self.x += self.mx
+        self.y += self.my
+
 def game_execution_page():
-    char = Charcter()
+    global char
+    char = Player()
     boss = Enemy()
-    player_bullet_info = deque()  # 총알 정보를 저장하는 큐
-    enemy_bullet_info = deque()
-    # 마지막 총알 발사 시간 초기화
+    player_bullets = deque()
+    enemy_bullets = deque()
+
     player_last_shot_time = pygame.time.get_ticks()
-    player_fire_rate = 300  # 발사 간격을 300ms (0.3초)로 설정
     enemy_last_shot_time = pygame.time.get_ticks()
-    enemy_fire_rate = random.randint(200,400)
 
     while True:
         for event in pygame.event.get():
@@ -191,64 +190,89 @@ def game_execution_page():
 
         keys = pygame.key.get_pressed()
 
-        # x, y 축 이동 (대각선 이동을 고려하여 속도 분배)
-        if keys[pygame.K_LEFT]:
-            char.x -= char.speed
-        if keys[pygame.K_RIGHT]:
-            char.x += char.speed
-        if keys[pygame.K_UP]:
-            char.y -= char.speed
-        if keys[pygame.K_DOWN]:
-            char.y += char.speed
+        dx, dy = 0, 0
+        if keys[pygame.K_LEFT]: dx -= 1
+        if keys[pygame.K_RIGHT]: dx += 1
+        if keys[pygame.K_UP]: dy -= 1
+        if keys[pygame.K_DOWN]: dy += 1
+        char.move(dx, dy)
 
-        # 캐릭터 화면 밖으로 나가는 작업 방지
-        if char.x < 0: char.x = 0
-        elif char.x + char.width > screen_width: char.x = screen_width-char.width
-        if char.y < 0: char.y = 0
-        elif char.y + char.height > screen_height: char.y = screen_height - char.height
+        char.x = max(0, min(screen_width - char.width, char.x))
+        char.y = max(0, min(screen_height - char.height, char.y))
 
-        # 'a' 키를 눌렀을 때 총알 발사, 발사 간격을 체크
         if keys[pygame.K_a]:
-            player_current_time = pygame.time.get_ticks()  # 현재 시간
-            if player_current_time - player_last_shot_time >= player_fire_rate:  # 발사 간격 체크
-                bullet = char.shoot()
-                player_bullet_info.append(bullet)  # 총알을 큐에 추가
-                player_last_shot_time = player_current_time  # 마지막 발사 시간을 현재 시간으로 갱신
+            now = pygame.time.get_ticks()
+            if now - player_last_shot_time >= 300:
+                player_bullets.append(char.shoot())
+                player_last_shot_time = now
 
-        # 총알 이동 (y축으로 이동)
-        for _ in range(len(player_bullet_info)):
-            bullet = player_bullet_info.popleft()  # 큐에서 하나씩 가져옴
-            bullet.move()                          # 총알을 위로 이동
-            if bullet.y >= 0:                      # 화면 밖으로 나가지 않도록
-                player_bullet_info.append(bullet)  # 총알이 화면에 남아 있으면 큐에 다시 추가
+        now = pygame.time.get_ticks()
+        if now - enemy_last_shot_time >= random.randint(300, 500):
+            enemy_bullets.append(boss.aim_and_shoot(char.x + char.width // 2, char.y + char.height // 2))
+            enemy_last_shot_time = now
 
+        player_bullets = deque([b for b in player_bullets if b.move() or b.y >= 0])
+        enemy_bullets = deque([b for b in enemy_bullets if b.move() or b.y <= screen_height])
 
-        enemy_current_time = pygame.time.get_ticks()  # 현재 시간
-        if enemy_current_time - enemy_last_shot_time >= enemy_fire_rate:  # 발사 간격 체크
-            bullet = boss.shoot()
-            enemy_bullet_info.append(bullet)  # 총알을 큐에 추가
-            enemy_last_shot_time = enemy_current_time  # 마지막 발사 시간을 현재 시간으로 갱신
+        # 🔥 충돌 체크 (플레이어 총알 → 적)
+        player_bullets = deque([
+            bullet for bullet in player_bullets
+            if not check_collision(bullet, boss)
+        ])
 
-        for _ in range(len(enemy_bullet_info)):
-            bullet = enemy_bullet_info.popleft()  # 큐에서 하나씩 가져옴
-            bullet.move()  # 총알을 아래로
-            if bullet.y <= screen_height:  # 화면 밖으로 나가지 않도록
-                player_bullet_info.append(bullet)  # 총알이 화면에 남아 있으면 큐에 다시 추가
+        # 🔥 충돌 체크 (적 총알 → 플레이어)
+        enemy_bullets = deque([
+            bullet for bullet in enemy_bullets
+            if not check_collision(bullet, char)
+        ])
 
+        if boss.health <= 0:
+            print("적 처치 완료!")
+            return
 
+        if char.health <= 0:
+            print("플레이어 사망! 게임 오버!")
+            return  # 게임 오버 처리 (end_page로 연결 가능)
 
-        # 화면을 채우기 전에 배경을 그리기
-        screen.fill((100, 100, 100))  # 배경 진회색
-
-        # 캐릭터와 총알을 화면에 그리기
+        screen.fill((100, 100, 100))
         boss.random_move()
-        screen.blit(boss.icon, (boss.x,boss.y))
-        screen.blit(char.icon, (char.x, char.y))
-        for bullet in player_bullet_info:
+        boss.draw(screen)
+        char.draw(screen)
+
+        for bullet in player_bullets:
             screen.blit(bullet.icon, (bullet.x, bullet.y))
+
+        for bullet in enemy_bullets:
+            screen.blit(bullet.icon, (bullet.x, bullet.y))
+
+        # 체력 표시 (옵션)
+        font = pygame.font.SysFont(None, 36)
+        hp_text = font.render(f"Player HP: {char.health}", True, (255, 255, 255))
+        boss_hp_text = font.render(f"Enemy HP: {boss.health}", True, (255, 0, 0))
+        screen.blit(hp_text, (20, 20))
+        screen.blit(boss_hp_text, (20, 50))
 
         pygame.display.flip()
         clock.tick(60)
+
+# 수정된 충돌 함수 (player도 처리)
+def check_collision(bullet, target):
+    bullet_rect = pygame.Rect(bullet.x, bullet.y, bullet.width, bullet.height)
+    target_rect = pygame.Rect(target.x, target.y, target.width, target.height)
+
+    if bullet_rect.colliderect(target_rect):
+        if isinstance(target, Player):
+            print("플레이어 피격!")
+            target.health -= 1  # 플레이어는 체력 1씩 감소
+        elif isinstance(target, Enemy):
+            print("적이 맞았다!")
+            target.health -= 10  # 적은 체력 10씩 감소
+        return True  # 충돌 발생 (총알 삭제 대상)
+
+    return False  # 충돌 없음
+
+
+
 
 def end_page():
     pass
