@@ -4,6 +4,28 @@ import random
 import pygame
 import sys
 
+# -------------- 버튼 및 조이스틱 설정 ------------------
+import spidev
+import time
+import RPi.GPIO as GPIO
+
+swt_channel = 0
+vrx_channel = 1
+vry_channel = 2
+
+delay = 0.1
+
+spi = spidev.SpiDev()
+spi.open(0, 0)  # bus=0, device=0
+spi.max_speed_hz = 1000000  # SPI 속도 설정
+
+button_pin = 17
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(button_pin, GPIO.IN, pull_up_down = GPIO.PUD_UP)	# 풀업저항 할당
+
+# ------------------------------------------------------
+
+
 # Pygame 초기화
 pygame.init()
 screen_width = 1080
@@ -231,6 +253,13 @@ def draw_background():
     screen.blit(background, (0, bg_y1))
     screen.blit(background, (0, bg_y2))
 
+def get_movement(channel):
+    val = spi.xfer2([1,(8+channel)<<4,0])
+    # print(f"val:{val}")
+    data = ((val[1] & 3) << 8) + val[2]
+    return data
+
+
 
 # 게임 실행 페이지에서 enemy의 추가 및 삭제 로직 수정
 def game_execution_page():
@@ -259,17 +288,36 @@ def game_execution_page():
         keys = pygame.key.get_pressed()
 
         dx, dy = 0, 0
-        if keys[pygame.K_LEFT]: dx -= 1
-        if keys[pygame.K_RIGHT]: dx += 1
-        if keys[pygame.K_UP]: dy -= 1
-        if keys[pygame.K_DOWN]: dy += 1
-        player.move(dx, dy)
-
+        # if keys[pygame.K_LEFT]: dx -= 1
+        # if keys[pygame.K_RIGHT]: dx += 1
+        # if keys[pygame.K_UP]: dy -= 1
+        # if keys[pygame.K_DOWN]: dy += 1
+        # player.move(dx, dy)
+        # JoyStick/test.py의 내용 연결하기
+        
+        vrx_pos = get_movement(vrx_channel)
+        # 100이하면 왼쪽, 900이상이면 오른쪽 
+        vry_pos = get_movement(vry_channel)
+        # 100이하면 위, 900이상이면 아래   
+        swt_val = get_movement(swt_channel)
+        # 일단 패스 나중에 궁극기 같은거로 판단
+        if vrx_pos <= 200:
+            dx -= 1
+        elif vrx_pos >= 800:
+            d += 1
+            
+        if vry_pos <= 200:
+            dy -= 1
+        elif vry_pos >= 800:
+            dy += 1
+        player.move(dx,dy)
+    
         player.x = max(0, min(screen_width - player.width, player.x))
         player.y = max(0, min(screen_height - player.height, player.y))
 
+
         # 플레이어 총알 발사
-        if keys[pygame.K_a]:
+        if GPIO.input(button_pin) == GPIO.LOW:
             now = pygame.time.get_ticks()
             if now - player_last_shot_time >= 300:
                 player_bullets.append(player.shoot())
@@ -391,4 +439,3 @@ page_func = [start_page,character_selection_page, game_execution_page]
 while True:
     page_func[current_page % 3]()
     current_page += 1
-
