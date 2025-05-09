@@ -1,51 +1,50 @@
 def calculate(exp):
-    # 중위표기법으로 적힌 exp를 후위표기법으로 변환 후, 연산한 결과값을 반환
-    # 중위 -> 후위 규칙
-    # 1. 숫자는 그대로 출력
-    # 2. 연산자의 경우 이미 stack에 연산자가 있다면, stack의 마지막 연산자가 현재 보고 있는 연산자보다
-    #    우선순위가 높다면 출력한다.
-    # 3. 연산자를 stack에 추가
+    # 연산자 표기 변환
+    operators = '+-*/'
+    exp = exp.replace('x', '*').replace('÷', '/').split()
+    # 연속된 연산자 처리
+    for i in range(len(exp)-1):
+        if exp[i] in operators and exp[i+1] in operators:
+            return "잘못된 계산식입니다."
 
-    op_priority = {'+':0,'-':0,'*':1,'/':1}
+    # 우선순위 정의
+    op_priority = {'+': 0, '-': 0, '*': 1, '/': 1}
     op_stack = []
     postfix = []
-    operators = '+-*/'
-    for e in exp.split():
+
+
+    # 중위 → 후위 변환
+    for e in exp:
         if e.isdigit():
             postfix.append(e)
-        else:
-            if op_stack and op_priority[op_stack[-1]] > op_priority[e]:
+        elif e in operators:
+            while op_stack and op_priority[op_stack[-1]] >= op_priority[e]:
                 postfix.append(op_stack.pop())
             op_stack.append(e)
-    postfix += op_stack[::-1]
-    print(postfix)  # 123*+
 
-    nums = []
-    # 후위 표기법 계산 방식
-    # 1. 숫자는 스텍에 추가
-    # 2. 연산자면 스텍의 최근 두 숫자를 뽑아 연산 후 다시 스텍에 추가
+    while op_stack:
+        postfix.append(op_stack.pop())
 
-    for e in postfix:
-        if e.isdigit():
-            nums.append(float(e))
-        else:
-            b = nums.pop()
-            a = nums.pop()
-            if e == '+':
-                c = a + b
-            elif e == '-':
-                c = a - b
-            elif e == '*':
-                c = a * b
+    print("후위표기식:", postfix)
+
+    # 후위 계산
+    try:
+        nums = []
+        for e in postfix:
+            if e.isdigit():
+                nums.append(float(e))
             else:
-                c = a / b
-            nums.append(c)
+                b = nums.pop()
+                a = nums.pop()
+                if e == '+':
+                    nums.append(a + b)
+                elif e == '-':
+                    nums.append(a - b)
+                elif e == '*':
+                    nums.append(a * b)
+                elif e == '/':
+                    nums.append(a / b)
+    except ZeroDivisionError:
+        return "계산중 0으로 나누는 과정이 발생하였습니다."
     result = nums[0]
-    if result % 1 == 0:
-        return int(result)
-    else:
-        return result
-
-exp = "5 / 2"
-result = calculate(exp)
-print(result)   # 7
+    return int(result) if result % 1 == 0 else result
