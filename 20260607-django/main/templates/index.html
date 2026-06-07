@@ -1,0 +1,67 @@
+
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    /* 메인 페이지 전용 스타일 */
+    .projects-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr); /* 3열 그리드 */
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+
+    .project-card {
+        background-color: var(--white);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 2.5rem 2rem;
+        min-height: 350px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .project-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px rgba(135, 206, 235, 0.15); /* 호버 시 옅은 하늘색 그림자 */
+        border-color: var(--key-color);
+    }
+
+    .project-title {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+        color: var(--text-main);
+    }
+
+    .project-desc {
+        color: var(--text-muted);
+        line-height: 1.6;
+    }
+</style>
+
+<div class="projects-grid">
+    {% for project in projects %}
+        <div class="project-card">
+            <h3 class="project-title">{{ project.title }}</h3>
+            <p class="project-desc">{{ project.description }}</p>
+        </div>
+    {% empty %}
+        <div class="project-card">
+            <h3 class="project-title">대표 프로젝트/<br>최신프로젝트</h3>
+            <p class="project-desc">간단한 설명</p>
+        </div>
+        <div class="project-card">
+            <h3 class="project-title">대표 프로젝트/<br>최신프로젝트</h3>
+            <p class="project-desc">간단한 설명</p>
+        </div>
+        <div class="project-card">
+            <h3 class="project-title">대표 프로젝트/<br>최신프로젝트</h3>
+            <p class="project-desc">간단한 설명</p>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

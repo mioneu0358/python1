@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ owner_name|default:"OO" }}의 프로젝트들</title>
+    <style>
+        /* CSS 변수 설정: 눈이 편안한 색상 테마 */
+        :root {
+            --bg-color: #F8FAFC;         /* 눈이 편안한 아주 밝은 배경 */
+            --white: #FFFFFF;
+            --text-main: #334155;        /* 너무 까맣지 않은 부드러운 텍스트 */
+            --text-muted: #64748B;
+            --key-color: #87CEEB;        /* 스카이블루 메인 색상 */
+            --key-color-hover: #5DADE2;  /* 마우스 오버 시 약간 진한 하늘색 */
+            --border-color: #E2E8F0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /* Navbar 스타일 */
+        .navbar {
+            background-color: var(--white);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 2rem;
+            height: 70px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .nav-left .brand {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--text-main);
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .nav-link {
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--key-color-hover);
+        }
+
+        /* 버튼 스타일 */
+        .btn-key {
+            background-color: var(--key-color);
+            color: var(--white);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: bold;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn-key:hover {
+            background-color: var(--key-color-hover);
+            color: var(--white);
+        }
+
+        .nav-divider {
+            width: 1px;
+            height: 20px;
+            background-color: var(--border-color);
+        }
+
+        /* 메인 콘텐츠 영역 */
+        main {
+            flex: 1;
+            padding: 3rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Footer 스타일 */
+        footer {
+            background-color: var(--white);
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-left">
+            <a href="/" class="brand">{{ owner_name|default:"OO" }}의 프로젝트들</a>
+        </div>
+        
+        <div class="nav-right">
+            <a href="#" class="nav-link">둘러보기(프로젝트 리스트)</a>
+            <a href="#" class="nav-link">소개 보기</a>
+            
+            <div class="nav-divider"></div>
+            
+            {% if user.is_authenticated %}
+                <a href="#" class="nav-link">마이페이지</a>
+                {% if user.is_colleague %}
+                    <span style="font-size: 0.8rem; color: var(--key-color);">[동료]</span>
+                {% endif %}
+                <a href="#" class="nav-link btn-key" style="background-color: var(--text-muted);">로그아웃</a>
+            {% else %}
+                <a href="#" class="nav-link">로그인</a>
+                <a href="#" class="nav-link btn-key">회원가입</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer>
+        <p>&copy; 2026 {{ owner_name|default:"OO" }}의 포트폴리오. All rights reserved.</p>
+    </footer>
+
+</body>
+</html>
