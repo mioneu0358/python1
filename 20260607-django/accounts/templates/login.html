@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    /* 로그인 폼 전용 스타일 (회원가입 폼과 동일한 디자인 랭귀지 유지) */
+    .auth-container {
+        max-width: 400px;
+        margin: 4rem auto; /* 화면 중앙에 오도록 상하 여백을 조금 더 확보 */
+        background-color: var(--white);
+        padding: 2.5rem 2rem;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    }
+
+    .auth-title {
+        text-align: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--text-main);
+        margin-bottom: 2rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: var(--text-main);
+        font-size: 0.95rem;
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-size: 1rem;
+        color: var(--text-main);
+        transition: all 0.2s ease;
+        outline: none;
+        background-color: #FAFAFA;
+    }
+
+    .form-group input:focus {
+        border-color: var(--key-color);
+        background-color: var(--white);
+        box-shadow: 0 0 0 3px rgba(135, 206, 235, 0.2);
+    }
+
+    /* 에러 메시지 스타일 */
+    .error-msg {
+        color: #EF4444;
+        font-size: 0.85rem;
+        margin-top: 0.4rem;
+    }
+
+    .non-field-errors {
+        background-color: #FEE2E2;
+        color: #B91C1C;
+        padding: 1rem;
+        border-radius: 6px;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+    }
+
+    .btn-full {
+        width: 100%;
+        padding: 0.85rem;
+        font-size: 1rem;
+        margin-top: 1rem;
+        cursor: pointer;
+        border: none;
+    }
+</style>
+
+<div class="auth-container">
+    <h2 class="auth-title">로그인</h2>
+
+    <form method="POST" action="{% url 'accounts:login' %}">
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+            <div class="non-field-errors">
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% for field in form %}
+            <div class="form-group">
+                {{ field.label_tag }}
+                {{ field }}
+                
+                {% if field.errors %}
+                    {% for error in field.errors %}
+                        <div class="error-msg">* {{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <button type="submit" class="btn-key btn-full">로그인</button>
+    </form>
+</div>
+{% endblock %}

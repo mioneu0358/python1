@@ -2,7 +2,7 @@ from django.shortcuts import render
 
 def index(request):
     dummy_projects = [
-        {"title": "골드웨이브 트레이딩 시스템", "description": "옵션 거래 자동화 시스템입니다."},
+        {"title": "프로젝트 1", "description": "첫 번째 프로젝트에 대한 간단한 설명입니다."},
         {"title": "프로젝트 2", "description": "두 번째 프로젝트에 대한 간단한 설명입니다."},
         {"title": "프로젝트 3", "description": "세 번째 프로젝트에 대한 간단한 설명입니다."},
     ]
