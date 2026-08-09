@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>회원가입 - DevLab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        /* Django 기본 form 렌더링에 CSS 적용 */
+        .django-form input {
+            width: 100%; padding: 0.5rem 1rem; border: 1px solid #cbd5e1; border-radius: 0.75rem;
+            margin-bottom: 0.5rem; outline: none;
+        }
+        .django-form input:focus { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2); }
+        .django-form label { display: block; font-size: 0.875rem; font-weight: 500; color: #334155; margin-bottom: 0.25rem; }
+        .django-form .helptext { font-size: 0.75rem; color: #64748b; margin-bottom: 1rem; display: block; }
+        .django-form .errorlist { color: #dc2626; font-size: 0.875rem; margin-bottom: 1rem; list-style-type: disc; padding-left: 1rem; }
+    </style>
+</head>
+<body class="bg-slate-50 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200/80 w-full max-w-md">
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold text-slate-900">학생 회원가입</h1>
+            <p class="text-sm text-slate-500 mt-2">프로젝트 관리를 위해 가입해주세요.</p>
+        </div>
+
+        <form  method="POST" class="django-form">
+            {% csrf_token %}
+            <!-- form.as_p를 쓰면 Django가 라벨과 인풋을 자동으로 그려줌 -->
+            {{ form.as_p }}
+
+            <button type="submit" class="w-full bg-indigo-600 text-white font-semibold py-2.5 rounded-xl hover:bg-indigo-700 transition mt-4">
+                가입 완료하기
+            </button>
+        </form>
+
+        <div class="mt-6 text-center text-sm text-slate-500">
+            이미 계정이 있으신가요? <a href="{% url 'users:login' %}" class="text-indigo-600 font-medium hover:underline">로그인</a>
+        </div>
+    </div>
+</body>
+</html>

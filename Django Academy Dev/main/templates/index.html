@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevLab - 프로젝트 & 학습 관리</title>
+    <!-- Tailwind CSS (최신 CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Alpine.js (Vue 스타일의 가벼운 프런트엔드 라이브러리) -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Google Fonts (Noto Sans KR) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col justify-between">
+
+    <!-- Navbar -->
+    <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
+        <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
+            <!-- Logo -->
+            <a href="/" class="flex items-center gap-2 font-bold text-xl text-slate-900 hover:opacity-80 transition">
+                <span class="bg-indigo-600 text-white p-1.5 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                </span>
+                <span>DevLab</span>
+            </a>
+
+            <!-- Navigation Links -->
+            <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
+                <a href="/" class="hover:text-indigo-600 transition">소개</a>
+                <a href="#posts" class="hover:text-indigo-600 transition">개발 노트</a>
+                <a href="#notion" class="hover:text-indigo-600 transition">자료실</a>
+            </nav>
+
+            <!-- Auth Buttons -->
+            <div class="flex items-center gap-3">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'projects:std_dashboard'%}" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm transition">대시보드</a>
+                    <form action="{% url 'users:logout' %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="px-3 py-2 text-sm font-medium text-slate-500 hover:text-slate-800 transition">로그아웃</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'users:login' %}" class="px-4 py-2 text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow-sm transition"> 로그인</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-5xl mx-auto px-4 py-10 space-y-12 flex-1">
+
+        <!-- Welcome Banner -->
+        <section class="bg-white rounded-3xl p-8 md:p-10 border border-slate-200/80 shadow-sm relative overflow-hidden">
+            <div class="max-w-2xl space-y-4">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700">
+                    👋 반가워요!
+                </span>
+                <h1 class="text-2xl md:text-3xl font-bold text-slate-900 leading-tight">
+                    선생님의 개인 수업 &amp; 프로젝트 저장소입니다
+                </h1>
+                <p class="text-slate-600 text-base leading-relaxed">
+                    함께 코딩하고, 고민하고, 성장 기록을 남기는 공간입니다.<br class="hidden sm:inline">
+                    수업 노트 확인과 피드백 제출은 로그인 후 내 대시보드에서 가능합니다.
+                </p>
+            </div>
+            <!-- Decorative Accent -->
+            <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-indigo-50 rounded-full blur-2xl -z-10"></div>
+        </section>
+
+        <!-- Development Notes / News Section (Alpine.js Interactive Example) -->
+        <section id="posts" x-data="{ expanded: false }" class="space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                    <span>📰</span> 최신 개발 노트 &amp; 가이드
+                </h2>
+                <button @click="expanded = !expanded" class="text-sm text-indigo-600 hover:underline font-medium">
+                    <span x-text="expanded ? '접기' : '더보기'"></span>
+                </button>
+            </div>
+
+            <div class="grid gap-3">
+                <!-- Post Item 1 -->
+                <a href="#" class="group block p-4 bg-white rounded-2xl border border-slate-200/80 hover:border-indigo-300 hover:shadow-md transition">
+                    <div class="flex items-center justify-between">
+                        <div class="space-y-1">
+                            <span class="text-xs font-medium text-slate-400">2026.07.26</span>
+                            <h3 class="font-semibold text-slate-800 group-hover:text-indigo-600 transition">
+                                💡 처음 시작하는 학생들을 위한 Git / GitHub 기초 가이드
+                            </h3>
+                        </div>
+                        <span class="text-slate-300 group-hover:text-indigo-600 transition">➔</span>
+                    </div>
+                </a>
+
+                <!-- Post Item 2 -->
+                <a href="#" class="group block p-4 bg-white rounded-2xl border border-slate-200/80 hover:border-indigo-300 hover:shadow-md transition">
+                    <div class="flex items-center justify-between">
+                        <div class="space-y-1">
+                            <span class="text-xs font-medium text-slate-400">2026.07.20</span>
+                            <h3 class="font-semibold text-slate-800 group-hover:text-indigo-600 transition">
+                                🚀 파이썬 가상환경(venv), 왜 필수로 써야 할까?
+                            </h3>
+                        </div>
+                        <span class="text-slate-300 group-hover:text-indigo-600 transition">➔</span>
+                    </div>
+                </a>
+
+                <!-- Extra Posts (Hidden by default, shown via Alpine.js) -->
+                <template x-if="expanded">
+                    <div class="space-y-3 pt-1">
+                        <a href="#" class="group block p-4 bg-white rounded-2xl border border-slate-200/80 hover:border-indigo-300 hover:shadow-md transition">
+                            <div class="flex items-center justify-between">
+                                <div class="space-y-1">
+                                    <span class="text-xs font-medium text-slate-400">2026.07.15</span>
+                                    <h3 class="font-semibold text-slate-800 group-hover:text-indigo-600 transition">
+                                        ⚙️ 웹 개발을 위한 기초 HTTP 커뮤니케이션 흐름 이해하기
+                                    </h3>
+                                </div>
+                                <span class="text-slate-300 group-hover:text-indigo-600 transition">➔</span>
+                            </div>
+                        </a>
+                    </div>
+                </template>
+            </div>
+        </section>
+
+        <!-- Notion External Resources Grid -->
+        <section id="notion" class="space-y-4">
+            <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                <span>📚</span> 수업 자료실 (Notion 공유 링크)
+            </h2>
+
+            <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <!-- Card 1 -->
+                <a href="https://notion.so" target="_blank" rel="noopener noreferrer" class="p-5 bg-white rounded-2xl border border-slate-200/80 hover:border-indigo-400 hover:shadow-md transition flex flex-col justify-between space-y-4 group">
+                    <div class="space-y-2">
+                        <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-lg">🐍</div>
+                        <h3 class="font-bold text-slate-800 group-hover:text-indigo-600 transition">파이썬 기초 문법 노트</h3>
+                        <p class="text-xs text-slate-500">변수, 조건문, 함수부터 객체지향 기초까지 정리</p>
+                    </div>
+                    <div class="text-xs font-medium text-slate-400 flex items-center justify-between pt-2 border-t border-slate-100">
+                        <span>Notion 문서 열기</span>
+                        <span class="group-hover:translate-x-1 transition">↗</span>
+                    </div>
+                </a>
+
+                <!-- Card 2 -->
+                <a href="https://notion.so" target="_blank" rel="noopener noreferrer" class="p-5 bg-white rounded-2xl border border-slate-200/80 hover:border-indigo-400 hover:shadow-md transition flex flex-col justify-between space-y-4 group">
+                    <div class="space-y-2">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-lg">🕸️</div>
+                        <h3 class="font-bold text-slate-800 group-hover:text-indigo-600 transition">Django 웹 개발 로드맵</h3>
+                        <p class="text-xs text-slate-500">MTV 패턴 및 ORM, Admin 활용 로드맵</p>
+                    </div>
+                    <div class="text-xs font-medium text-slate-400 flex items-center justify-between pt-2 border-t border-slate-100">
+                        <span>Notion 문서 열기</span>
+                        <span class="group-hover:translate-x-1 transition">↗</span>
+                    </div>
+                </a>
+
+                <!-- Card 3 -->
+                <a href="https://notion.so" target="_blank" rel="noopener noreferrer" class="p-5 bg-white rounded-2xl border border-slate-200/80 hover:border-indigo-400 hover:shadow-md transition flex flex-col justify-between space-y-4 group">
+                    <div class="space-y-2">
+                        <div class="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center font-bold text-lg">💻</div>
+                        <h3 class="font-bold text-slate-800 group-hover:text-indigo-600 transition">서버 배포 &amp; Linux 기초</h3>
+                        <p class="text-xs text-slate-500">VPS 기본 명령어 및 Nginx 세팅 방법</p>
+                    </div>
+                    <div class="text-xs font-medium text-slate-400 flex items-center justify-between pt-2 border-t border-slate-100">
+                        <span>Notion 문서 열기</span>
+                        <span class="group-hover:translate-x-1 transition">↗</span>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-400">
+        <p>© 2026 DevLab. Personal Student &amp; Project Management System.</p>
+    </footer>
+
+</body>
+</html>
