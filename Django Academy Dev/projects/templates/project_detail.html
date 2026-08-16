@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ project.title }} - DevLab</title>
+    <!-- Tailwind + Typography Plugin (마크다운 예쁘게 그리기 용) -->
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- CodeMirror (읽기 전용 테마) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
+    
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .CodeMirror { height: auto; font-family: 'D2Coding', 'Consolas', monospace; font-size: 14px; border-radius: 0.75rem; padding: 10px 0; }
+        /* 스크롤바 숨기기 (메모장 깔끔하게) */
+        .memo-container::-webkit-scrollbar { width: 4px; }
+        .memo-container::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen pb-20">
+
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <h1 class="font-bold text-xl text-slate-900 truncate flex-1">📂 {{ project.title }}</h1>
+            <div class="flex items-center gap-3">
+                <span class="text-sm text-slate-500 font-medium bg-slate-100 px-3 py-1 rounded-lg">
+                    참여: {{ project.participants.count }}명 | {{ project.study_class.name|default:"개인 프로젝트" }}
+                </span>
+                
+                <!-- 💡 새로 추가된 수정 버튼 -->
+                <a href="{% url 'projects:edit' project.pk %}" class="px-4 py-2 bg-white text-indigo-600 border border-indigo-200 text-sm font-bold rounded-xl hover:bg-indigo-50 transition shadow-sm">
+                    수정
+                </a>
+                
+                <a href="{% url 'projects:list' %}" class="px-4 py-2 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-slate-800 transition shadow-sm">
+                    목록으로
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-8 space-y-8">
+        
+        {% for block in blocks %}
+        <!-- 각 블록을 묶는 그리드 (왼쪽: 셀 내용, 오른쪽: 메모장) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            
+            <!-- [왼쪽 영역] 마크다운 또는 코드 뷰어 (70%) -->
+            <div class="lg:col-span-8 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col justify-center">
+                
+                {% if block.block_type == 'markdown' %}
+                    <div class="flex items-center mb-4">
+                        <span class="text-xs font-bold px-2 py-1 bg-slate-100 text-slate-600 rounded-lg">M Markdown</span>
+                    </div>
+                    <!-- 💡 수정된 부분: 원본 데이터를 숨겨두고, 자바스크립트가 꺼내서 아래 div에 그립니다 -->
+                    <div class="markdown-wrapper">
+                        <textarea class="markdown-raw hidden">{{ block.content }}</textarea>
+                        <div class="prose prose-slate max-w-none markdown-rendered"></div>
+                    </div>
+                {% elif block.block_type == 'code' %}
+                    <div class="flex items-center mb-4">
+                        <span class="text-xs font-bold px-2 py-1 bg-slate-800 text-green-400 rounded-lg font-mono">Code</span>
+                    </div>
+                    <!-- CodeMirror 렌더링 타겟 영역 -->
+                    <textarea class="code-content hidden">{{ block.content }}</textarea>
+                {% endif %}
+
+            </div>
+
+            <!-- [오른쪽 영역] 해당 블록의 메모장 (30%) -->
+            <div class="lg:col-span-4 bg-slate-50/50 rounded-2xl shadow-sm border border-slate-200 p-4 flex flex-col h-full max-h-[400px]">
+                <h4 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1">
+                    <span>💬 메모 및 피드백</span>
+                    <span class="bg-indigo-100 text-indigo-700 text-xs px-1.5 py-0.5 rounded-full" id="memo-count-{{ block.id }}">{{ block.memos.count }}</span>
+                </h4>
+                
+                <!-- 작성된 메모 리스트 -->
+                <div class="flex-1 overflow-y-auto space-y-3 mb-4 memo-container" id="memo-list-{{ block.id }}">
+                    {% for memo in block.memos.all %}
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-center mb-1.5">
+                            <span class="font-bold text-sm text-indigo-600">{{ memo.author.name|default:memo.author.username }}</span>
+                            <span class="text-xs text-slate-400 font-medium">{{ memo.created_at|date:"m/d H:i" }}</span>
+                        </div>
+                        <p class="text-sm text-slate-700 whitespace-pre-wrap">{{ memo.content }}</p>
+                    </div>
+                    {% empty %}
+                    <p class="text-xs text-slate-400 text-center py-4 empty-msg">아직 등록된 메모가 없습니다.</p>
+                    {% endfor %}
+                </div>
+
+                <!-- 메모 입력 폼 -->
+                <div class="mt-auto flex gap-2">
+                    <input type="text" id="memo-input-{{ block.id }}" placeholder="이 셀에 대한 메모를 남겨보세요..." 
+                           class="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                           onkeypress="if(event.key === 'Enter') submitMemo({{ block.id }})">
+                    <button onclick="submitMemo({{ block.id }})" class="px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition">
+                        등록
+                    </button>
+                </div>
+            </div>
+
+        </div>
+        {% endfor %}
+
+    </main>
+
+    <!-- CSRF Token -->
+    <meta name="csrf-token" content="{{ csrf_token }}">
+
+    <!-- 필수 라이브러리: marked.js(마크다운 변환), CodeMirror -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/clike/clike.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. 마크다운 블록 렌더링
+            document.querySelectorAll('.markdown-wrapper').forEach(wrapper => {
+                const rawMarkdown = wrapper.querySelector('.markdown-raw').value;
+                const targetDiv = wrapper.querySelector('.markdown-rendered');
+                if (rawMarkdown) {
+                    targetDiv.innerHTML = marked.parse(rawMarkdown);
+                }
+            });
+
+            // 2. 코드 블록 읽기 전용으로 렌더링
+            document.querySelectorAll('.code-content').forEach(textarea => {
+                CodeMirror.fromTextArea(textarea, {
+                    mode: 'python', // (실무에선 DB에 언어 정보를 저장해 매핑하기도 합니다)
+                    theme: 'dracula',
+                    lineNumbers: true,
+                    readOnly: 'nocursor', // 💡 마우스 클릭이나 수정을 막는 읽기 전용 속성
+                    viewportMargin: Infinity
+                });
+            });
+        });
+
+        // 3. 비동기 메모 등록 로직 (Fetch API)
+        async function submitMemo(blockId) {
+            const inputEl = document.getElementById(`memo-input-${blockId}`);
+            const content = inputEl.value.trim();
+            if (!content) return;
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            try {
+                const response = await fetch(`/projects/api/blocks/${blockId}/memo/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ content: content })
+                });
+
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    // 메모 리스트 업데이트
+                    const memoList = document.getElementById(`memo-list-${blockId}`);
+                    
+                    // '등록된 메모가 없습니다' 메시지가 있으면 제거
+                    const emptyMsg = memoList.querySelector('.empty-msg');
+                    if (emptyMsg) emptyMsg.remove();
+
+                    // 새 메모 HTML 뼈대 생성 및 삽입
+                    const newMemoHTML = `
+                        <div class="bg-white p-3 rounded-xl border border-indigo-200 shadow-sm">
+                            <div class="flex justify-between items-center mb-1.5">
+                                <span class="font-bold text-sm text-indigo-600">${data.author_name}</span>
+                                <span class="text-xs text-slate-400 font-medium">${data.created_at}</span>
+                            </div>
+                            <p class="text-sm text-slate-700 whitespace-pre-wrap">${data.content}</p>
+                        </div>
+                    `;
+                    memoList.insertAdjacentHTML('beforeend', newMemoHTML);
+                    
+                    // 카운트 증가 및 스크롤 맨 아래로 이동
+                    const countEl = document.getElementById(`memo-count-${blockId}`);
+                    countEl.innerText = parseInt(countEl.innerText) + 1;
+                    memoList.scrollTop = memoList.scrollHeight;
+                    
+                    // 입력창 초기화
+                    inputEl.value = '';
+                } else {
+                    alert('저장에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error(error);
+                alert('통신 중 오류가 발생했습니다.');
+            }
+        }
+    </script>
+</body>
+</html>

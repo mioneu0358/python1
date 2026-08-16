@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>프로젝트 생성 - DevLab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Noto Sans KR', sans-serif; }</style>
+</head>
+<body class="bg-slate-50 min-h-screen pb-20">
+
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+            <h1 class="font-bold text-xl text-slate-900">🚀 새 프로젝트 구상 및 생성</h1>
+            <button id="saveProjectBtn" class="px-6 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition shadow-sm">
+                프로젝트 생성 완료
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 py-8 space-y-6">
+        
+        <!-- 1. 프로젝트 이름 입력란 -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <label class="block text-sm font-bold text-slate-700 mb-2">프로젝트 이름</label>
+            <input type="text" id="projectTitle" placeholder="예) 24시간 자동 트레이딩 봇 골드웨이브" class="w-full px-4 py-3 border border-slate-300 rounded-xl text-lg font-bold focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+
+        <!-- 2. 기한 설정 & 반 선택 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- 기한 설정 -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <label class="block text-sm font-bold text-slate-700 mb-2">기한 설정</label>
+                <div class="flex items-center gap-2">
+                    <input type="date" id="startDate" class="flex-1 px-3 py-2 border border-slate-300 rounded-xl text-sm outline-none">
+                    <span class="text-slate-400 font-bold">~</span>
+                    <input type="date" id="endDate" class="flex-1 px-3 py-2 border border-slate-300 rounded-xl text-sm outline-none">
+                </div>
+            </div>
+
+            <!-- 반 선택 -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                <label class="block text-sm font-bold text-slate-700 mb-2">소속 반</label>
+                <div class="flex items-center justify-between">
+                    <span id="selectedClassName" class="text-sm font-medium text-slate-600">개인 프로젝트 (선택된 반 없음)</span>
+                    <input type="hidden" id="selectedClassId" value="">
+                    <button onclick="openClassModal()" class="px-4 py-2 bg-slate-100 text-slate-700 text-sm font-bold rounded-xl hover:bg-slate-200 transition">
+                        반 선택
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. 참여 인원 및 리더 설정 -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+            <div class="relative">
+                <label class="block text-sm font-bold text-slate-700 mb-2">참여 인원 검색 및 추가</label>
+                <input type="text" id="userSearchInput" placeholder="팀원 이름 검색 (예: 홍길동)" class="w-full px-4 py-2 border border-slate-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500" oninput="searchUsers(this.value)">
+                
+                <!-- 자동완성 드롭다운 -->
+                <div id="userSearchResults" class="absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg hidden z-20 max-h-48 overflow-y-auto"></div>
+            </div>
+
+            <!-- 선택된 참여인원 리스트 및 리더 선택 -->
+            <div>
+                <label class="block text-sm font-bold text-slate-700 mb-2">참여 인원 및 리더 지정</label>
+                <div id="participantsList" class="space-y-2 border border-slate-200 rounded-xl p-4 bg-slate-50">
+                    <!-- 기본 생성자(본인) 기본 탑재 -->
+                    <div class="flex items-center justify-between bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm" data-userid="{{ request.user.id }}">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-sm text-slate-900">{{ request.user.name|default:request.user.username }}</span>
+                            <span class="text-xs text-slate-400">({{ request.user.email }})</span>
+                            <span class="bg-indigo-100 text-indigo-700 text-xs px-2 py-0.5 rounded-full font-bold">본인</span>
+                        </div>
+                        <label class="flex items-center gap-1.5 text-xs font-bold text-slate-600 cursor-pointer">
+                            <input type="radio" name="projectLeader" value="{{ request.user.id }}" checked class="text-indigo-600"> 리더
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. 프로젝트 간단한 설명 -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <label class="block text-sm font-bold text-slate-700 mb-2">프로젝트 간단한 설명</label>
+            <textarea id="projectDesc" rows="3" placeholder="프로젝트의 주요 목표나 개요를 적어주세요..." class="w-full px-4 py-2 border border-slate-300 rounded-xl text-sm outline-none resize-y"></textarea>
+        </div>
+
+        <!-- 5. 프로젝트 단계 설정 (대분류 & 소분류 체크리스트) -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="text-base font-bold text-slate-900">프로젝트 단계 설정</h3>
+                <button onclick="addStage()" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 text-xs font-bold rounded-lg hover:bg-indigo-100 transition">
+                    + 대단계(Stage) 추가하기
+                </button>
+            </div>
+
+            <!-- 단계들이 들어갈 컨테이너 -->
+            <div id="stagesContainer" class="space-y-4">
+                <!-- 기본 1단계 샘플 -->
+                <div class="stage-item bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3" data-stage-id="1">
+                    <div class="flex items-center justify-between gap-2">
+                        <input type="text" value="1단계: 뼈대 만들기" class="stage-title-input flex-1 px-3 py-1.5 font-bold text-sm bg-white border border-slate-300 rounded-xl outline-none">
+                        <button onclick="this.closest('.stage-item').remove()" class="text-xs text-red-500 hover:underline">단계 삭제</button>
+                    </div>
+                    
+                    <!-- 체크리스트(소분류) 컨테이너 -->
+                    <div class="checklist-container space-y-2 pl-4 border-l-2 border-indigo-200">
+                        <div class="flex items-center gap-2">
+                            <input type="text" value="요구사항 분석 및 아키텍처 초안 작성" class="checklist-input flex-1 px-3 py-1 text-xs bg-white border border-slate-200 rounded-lg outline-none">
+                            <button onclick="this.closest('div').remove()" class="text-xs text-slate-400 hover:text-red-500">삭제</button>
+                        </div>
+                    </div>
+
+                    <button onclick="addChecklist(this.closest('.stage-item'))" class="text-xs text-indigo-600 font-bold hover:underline pl-4">
+                        + 체크리스트 추가
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- 반 선택 모달 (팝업) -->
+    <div id="classModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-xl space-y-4">
+            <h3 class="font-bold text-lg text-slate-900">소속 반 선택</h3>
+            <div class="space-y-2 max-h-60 overflow-y-auto">
+                <div onclick="selectClass('', '개인 프로젝트 (선택 안함)')" class="p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer text-sm font-medium">
+                    개인 프로젝트 (선택 안함)
+                </div>
+                {% for c in classes %}
+                <div onclick="selectClass('{{ c.id }}', '{{ c.name }}')" class="p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer flex justify-between items-center">
+                    <span class="text-sm font-bold text-slate-800">{{ c.name }}</span>
+                    <span class="text-xs text-slate-500">{{ c.description|default:"" }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            <button onclick="closeClassModal()" class="w-full py-2 bg-slate-900 text-white text-sm font-bold rounded-xl">닫기</button>
+        </div>
+    </div>
+
+    <meta name="csrf-token" content="{{ csrf_token }}">
+
+    <script>
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        let stageSeq = 1;
+
+        // --- 반 선택 모달 제어 ---
+        function openClassModal() { document.getElementById('classModal').classList.remove('hidden'); }
+        function closeClassModal() { document.getElementById('classModal').classList.add('hidden'); }
+        function selectClass(id, name) {
+            document.getElementById('selectedClassId').value = id;
+            document.getElementById('selectedClassName').innerText = name;
+            closeClassModal();
+        }
+
+        // --- 참여 인원 검색 및 추가 로직 ---
+        let searchTimeout;
+        async function searchUsers(query) {
+            clearTimeout(searchTimeout);
+            const resultsBox = document.getElementById('userSearchResults');
+            if (!query.trim()) { resultsBox.classList.add('hidden'); return; }
+
+            searchTimeout = setTimeout(async () => {
+                try {
+                    const res = await fetch(`/projects/api/search-users/?q=${encodeURIComponent(query)}`);
+                    const data = await res.json();
+                    
+                    resultsBox.innerHTML = '';
+                    if (data.users.length === 0) {
+                        resultsBox.innerHTML = '<div class="p-3 text-xs text-slate-400">검색 결과가 없습니다.</div>';
+                    } else {
+                        data.users.forEach(u => {
+                            resultsBox.innerHTML += `
+                                <div onclick="addParticipant(${u.id}, '${u.name}', '${u.email_prefix}')" class="p-3 hover:bg-slate-50 cursor-pointer flex justify-between items-center text-sm border-b border-slate-100 last:border-0">
+                                    <span class="font-bold text-slate-800">${u.name}</span>
+                                    <span class="text-xs text-slate-400">@${u.email_prefix}</span>
+                                </div>
+                            `;
+                        });
+                    }
+                    resultsBox.classList.remove('hidden');
+                } catch(e) { console.error(e); }
+            }, 300);
+        }
+
+        function addParticipant(id, name, emailPrefix) {
+            const container = document.getElementById('participantsList');
+            // 중복 추가 방지
+            if (container.querySelector(`[data-userid="${id}"]`)) {
+                document.getElementById('userSearchResults').classList.add('hidden');
+                document.getElementById('userSearchInput').value = '';
+                return;
+            }
+
+            const html = `
+                <div class="flex items-center justify-between bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm" data-userid="${id}">
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-sm text-slate-900">${name}</span>
+                        <span class="text-xs text-slate-400">(@${emailPrefix})</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <label class="flex items-center gap-1.5 text-xs font-bold text-slate-600 cursor-pointer">
+                            <input type="radio" name="projectLeader" value="${id}" class="text-indigo-600"> 리더
+                        </label>
+                        <button onclick="this.closest('[data-userid]').remove()" class="text-xs text-red-500 hover:underline">제거</button>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+            document.getElementById('userSearchResults').classList.add('hidden');
+            document.getElementById('userSearchInput').value = '';
+        }
+
+        // --- 단계 및 체크리스트 동적 추가 ---
+        function addStage() {
+            stageSeq++;
+            const container = document.getElementById('stagesContainer');
+            const html = `
+                <div class="stage-item bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3" data-stage-id="${stageSeq}">
+                    <div class="flex items-center justify-between gap-2">
+                        <input type="text" placeholder="단계명을 입력하세요 (예: 2단계: 핵심 로직 구현)" class="stage-title-input flex-1 px-3 py-1.5 font-bold text-sm bg-white border border-slate-300 rounded-xl outline-none">
+                        <button onclick="this.closest('.stage-item').remove()" class="text-xs text-red-500 hover:underline">단계 삭제</button>
+                    </div>
+                    <div class="checklist-container space-y-2 pl-4 border-l-2 border-indigo-200">
+                        <div class="flex items-center gap-2">
+                            <input type="text" placeholder="체크리스트 내용" class="checklist-input flex-1 px-3 py-1 text-xs bg-white border border-slate-200 rounded-lg outline-none">
+                            <button onclick="this.closest('div').remove()" class="text-xs text-slate-400 hover:text-red-500">삭제</button>
+                        </div>
+                    </div>
+                    <button onclick="addChecklist(this.closest('.stage-item'))" class="text-xs text-indigo-600 font-bold hover:underline pl-4">
+                        + 체크리스트 추가
+                    </button>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        }
+
+        function addChecklist(stageItem) {
+            const clContainer = stageItem.querySelector('.checklist-container');
+            const html = `
+                <div class="flex items-center gap-2">
+                    <input type="text" placeholder="체크리스트 내용" class="checklist-input flex-1 px-3 py-1 text-xs bg-white border border-slate-200 rounded-lg outline-none">
+                    <button onclick="this.closest('div').remove()" class="text-xs text-slate-400 hover:text-red-500">삭제</button>
+                </div>
+            `;
+            clContainer.insertAdjacentHTML('beforeend', html);
+        }
+
+        // --- 최종 프로젝트 저장 로직 ---
+        document.getElementById('saveProjectBtn').addEventListener('click', async () => {
+            const title = document.getElementById('projectTitle').value.trim();
+            if (!title) { alert('프로젝트 이름을 입력해주세요.'); return; }
+
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const classId = document.getElementById('selectedClassId').value;
+            const description = document.getElementById('projectDesc').value;
+
+            // 참여 인원 ID 수집
+            const participantIds = [];
+            document.querySelectorAll('#participantsList [data-userid]').forEach(el => {
+                participantIds.push(el.getAttribute('data-userid'));
+            });
+
+            // 리더 ID 수집
+            const leaderRadio = document.querySelector('input[name="projectLeader"]:checked');
+            const leaderId = leaderRadio ? leaderRadio.value : participantIds[0];
+
+            // 단계 및 체크리스트 구조 수집
+            const stagesData = [];
+            document.querySelectorAll('.stage-item').forEach((stageEl, sIndex) => {
+                const stageName = stageEl.querySelector('.stage-title-input').value.trim();
+                if (!stageName) return;
+
+                const checklists = [];
+                stageEl.querySelectorAll('.checklist-input').forEach(clEl => {
+                    const clText = clEl.value.trim();
+                    if (clText) checklists.push(clText);
+                });
+
+                stagesData.push({
+                    name: stageName,
+                    order: sIndex,
+                    checklists: checklists
+                });
+            });
+
+            const payload = {
+                title, description, startDate, endDate, classId,
+                participantIds, leaderId, stages: stagesData
+            };
+
+            try {
+                const response = await fetch('/projects/create/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+                if (data.status === 'success') {
+                    window.location.href = data.redirect_url;
+                } else {
+                    alert('저장 실패: ' + (data.msg || '알 수 없는 오류'));
+                }
+            } catch(e) { console.error(e); alert('통신 중 오류가 발생했습니다.'); }
+        });
+    </script>
+</body>
+</html>

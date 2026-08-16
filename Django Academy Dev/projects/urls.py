@@ -22,4 +22,10 @@ urlpatterns = [
     path('api/journals/', get_journals, name='get_journals'),
     path('api/journals/save/', save_journal, name='save_journal'),
     path('api/journals/delete/', delete_journal, name='delete_journal'),  
+    path('list/',project_list, name='list'),
+    path("create/", project_create,name='create'),
+    path('upload-image/', upload_image, name='upload_image'),
+    path('<int:pk>/', project_detail, name='detail'),
+    path('api/blocks/<int:block_id>/memo/', add_memo, name='add_memo'),
+    path('<int:pk>/edit/', project_edit, name='edit'),
 ]

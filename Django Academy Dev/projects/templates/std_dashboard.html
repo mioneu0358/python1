@@ -84,21 +84,25 @@
             <!-- 오른쪽: GitHub 사이드바 (30%) -->
             <section class="lg:col-span-4 space-y-6">
                 
-                <!-- 학생 프로필 및 요약 -->
+               <!-- 나의 프로젝트 현황 -->
                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-                    <h3 class="text-lg font-bold text-slate-900 mb-4">📊 나의 학습 요약</h3>
+                    <h3 class="text-lg font-bold text-slate-900 mb-4">📂 나의 프로젝트 현황</h3>
                     <div class="space-y-3 text-sm text-slate-600">
                         <div class="flex justify-between items-center pb-2 border-b border-slate-100">
-                            <span>이번 달 작성 일지</span>
-                            <span class="font-bold text-indigo-600">8건</span>
+                            <span>총 프로젝트 건수</span>
+                            <!-- 추후 뷰에서 {{ project_count }} 등으로 데이터를 넘겨줄 예정입니다 -->
+                            <span class="font-bold text-indigo-600">3건</span> 
                         </div>
                         <div class="flex justify-between items-center pb-2 border-b border-slate-100">
                             <span>참여 중인 반</span>
+                            <!-- 추후 학생 모델과 연결된 반 이름을 렌더링 -->
                             <span class="font-bold text-slate-900">고급 파이썬 1반</span>
                         </div>
-                        <button class="w-full mt-2 py-2 bg-slate-900 text-white rounded-xl font-medium hover:bg-slate-800 transition">
-                            📄 포트폴리오 리포트 추출
-                        </button>
+                        
+                        <!-- 프로젝트 게시판 이동 버튼 -->
+                        <a href="{% url 'projects:list' %}" class="block w-full mt-4 py-2.5 bg-slate-900 text-white text-center rounded-xl font-bold hover:bg-slate-800 transition shadow-sm">
+                            🚀 프로젝트 게시판 보러가기
+                        </a>
                     </div>
                 </div>
 
