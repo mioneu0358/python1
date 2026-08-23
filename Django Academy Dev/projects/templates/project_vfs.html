@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>파일 탐색기 - {{ project.title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- CodeMirror 라이브러리 (라인 번호 & 코드 색상 강조) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/material-darker.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; overflow: hidden; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        /* 트리 들여쓰기를 위한 유틸리티 클래스 */
+        .pl-level-1 { padding-left: 1rem; }
+        .pl-level-2 { padding-left: 2rem; }
+        .pl-level-3 { padding-left: 3rem; }
+        .pl-level-4 { padding-left: 4rem; }
+        .CodeMirror { height: 100%; font-family: 'D2Coding', 'Consolas', monospace; font-size: 14px; border-radius: 0.5rem; }
+    </style>
+</head>
+<body class="bg-white h-screen flex flex-col">
+
+    <!-- 상단 헤더 -->
+   <!-- 1. 상단 헤더 -->
+    <header class="h-14 bg-slate-900 flex items-center justify-between px-6 flex-shrink-0 text-white">
+        <div class="flex items-center gap-3">
+            <span class="text-xl">💻</span>
+            <a href="{% url 'projects:detail' project.id %}" class="font-bold text-lg hover:text-indigo-300 transition">{{ project.title }}</a>
+            <span class="text-slate-500 text-sm mx-2">/</span>
+            <span class="text-slate-300 text-sm">파일 탐색기</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <!-- 💡 새롭게 추가된 전체 백업 버튼 -->
+            <a href="{% url 'projects:api_backup_project' project.id %}" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-xs font-bold rounded-lg transition shadow-sm">
+                📦 프로젝트 백업 (ZIP)
+            </a>
+            <a href="{% url 'projects:detail' project.id %}" class="text-sm font-medium text-slate-300 hover:text-white transition">목록으로 이동 ➔</a>
+        </div>
+    </header>
+
+    <!-- 메인 작업 영역 -->
+    <main class="flex-1 flex overflow-hidden">
+        
+        <!-- [좌측] 파일/폴더 트리 영역 -->
+        <aside class="w-72 bg-slate-50 border-r border-slate-200 flex flex-col h-full">
+            <div class="h-12 border-b border-slate-200 flex items-center justify-between px-4 bg-slate-100 flex-shrink-0">
+                <span class="font-bold text-sm text-slate-700">🗂️ 프로젝트 구조</span>
+                <!-- 💡 최상위 폴더 추가 버튼 -->
+                <button onclick="addFolder(null)" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition p-1 bg-indigo-50 rounded">
+                    + 새 폴더
+                </button>
+            </div>
+            
+            <!-- 💡 백엔드에서 불러온 트리가 그려질 영역 -->
+            <div id="vfsTreeContainer" class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-0.5">
+                <!-- JS가 이 안을 채웁니다 -->
+                <p class="text-xs text-slate-400 text-center py-4">로딩 중...</p>
+            </div>
+        </aside>
+
+        <!-- [우측] 파일 내용 및 피드백 영역 (이전 단계 UI 유지) -->
+        <section class="flex-1 flex flex-col h-full bg-white relative">
+            
+            <div class="h-12 border-b border-slate-200 flex items-center justify-between px-6 bg-white flex-shrink-0">
+                <div class="flex items-center gap-2 text-sm">
+                    <span class="text-slate-400" id="currentFilePath">경로 없음 /</span>
+                    <span class="font-bold text-slate-800" id="currentFileName">파일을 선택해주세요</span>
+                </div>
+            </div>
+
+            <!-- 파일 뷰어 영역 -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar bg-slate-900 p-6 flex items-center justify-center">
+                <p class="text-slate-500 text-sm">좌측 탐색기에서 파일을 선택하면 이곳에 내용이 표시됩니다.</p>
+            </div>
+
+            <!-- 피드백 & 수정 요청 영역 (생략됨 - 추후 파일 로드 시 기능 연결) -->
+            <div class="h-12 border-t border-slate-200 bg-slate-50 flex items-center justify-center">
+                <span class="text-xs text-slate-400">댓글/수정요청 기능은 파일을 선택한 후 활성화됩니다.</span>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- CSRF Token -->
+    <meta name="csrf-token" content="{{ csrf_token }}">
+
+    <script>
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const projectId = {{ project.id }};
+        
+        document.addEventListener('DOMContentLoaded', loadTree);
+
+        // 1. 서버에서 전체 폴더/파일 구조 불러오기
+        async function loadTree() {
+            try {
+                const response = await fetch(`/projects/${projectId}/api/tree/`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    const container = document.getElementById('vfsTreeContainer');
+                    container.innerHTML = '';
+                    
+                    if (data.tree.length === 0) {
+                        container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">생성된 폴더나 파일이 없습니다.</p>';
+                        return;
+                    }
+                    
+                    // 재귀 함수로 트리 그리기 시작
+                    data.tree.forEach(folder => {
+                        container.insertAdjacentHTML('beforeend', buildTreeHTML(folder, 0));
+                    });
+                }
+            } catch (error) {
+                console.error(error);
+                alert('트리 구조를 불러오는데 실패했습니다.');
+            }
+        }
+
+        // 2. 트리를 재귀적으로 그리는 HTML 생성 함수
+        // 2. 트리를 재귀적으로 그리는 HTML 생성 함수
+        function buildTreeHTML(folder, depth) {
+            const paddingLeft = (depth * 1.5) + 0.5; 
+            
+            let html = `
+                <!-- 폴더 아이템 -->
+                <div class="group flex items-center justify-between pr-2 py-1.5 hover:bg-slate-200 rounded-lg text-sm text-slate-700" style="padding-left: ${paddingLeft}rem;">
+                    <div class="flex items-center gap-2 font-medium cursor-pointer flex-1">
+                        <span class="text-xs text-slate-300 font-normal">${depth > 0 ? '└' : ''}</span>
+                        <span>📂</span> ${folder.name}
+                    </div>
+                    <div class="hidden group-hover:flex items-center gap-1">
+                        <button onclick="addFile(${folder.id})" class="text-[10px] bg-slate-300 hover:bg-emerald-200 text-slate-700 px-1.5 py-0.5 rounded" title="새 파일">📄+</button>
+                        <button onclick="addFolder(${folder.id})" class="text-[10px] bg-slate-300 hover:bg-indigo-200 text-slate-700 px-1.5 py-0.5 rounded" title="하위 폴더">📂+</button>
+                        <!-- 💡 폴더 삭제 버튼 -->
+                        <button onclick="deleteItem('folder', ${folder.id}, '${folder.name}')" class="text-[10px] bg-red-100 hover:bg-red-300 text-red-700 px-1.5 py-0.5 rounded" title="삭제">🗑️</button>
+                    </div>
+                </div>
+            `;
+
+            if (folder.subfolders && folder.subfolders.length > 0) {
+                folder.subfolders.forEach(sub => { html += buildTreeHTML(sub, depth + 1); });
+            }
+
+            if (folder.files && folder.files.length > 0) {
+                folder.files.forEach(file => {
+                    const filePadding = (depth + 1) * 1.5 + 0.5;
+                    html += `
+                        <!-- 파일 아이템 -->
+                        <div class="group flex items-center justify-between pr-2 py-1.5 hover:bg-slate-200 rounded-lg text-sm text-slate-600 transition" style="padding-left: ${filePadding}rem;">
+                            <div onclick="openFile(${file.id}, '${file.name}')" class="flex items-center gap-2 cursor-pointer flex-1">
+                                <span class="text-xs text-slate-300 font-normal">└</span>
+                                <span>📄</span> ${file.name}
+                            </div>
+                            <!-- 💡 파일 삭제 버튼 -->
+                            <div class="hidden group-hover:flex items-center gap-1">
+                                <button onclick="deleteItem('file', ${file.id}, '${file.name}')" class="text-[10px] bg-red-100 hover:bg-red-300 text-red-700 px-1.5 py-0.5 rounded" title="삭제">🗑️</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            return html;
+        }
+
+        // 3. 폴더 생성 API 호출
+        async function addFolder(parentId) {
+            const folderName = prompt("새 폴더 이름을 입력하세요:");
+            if (!folderName) return;
+
+            try {
+                const response = await fetch(`/projects/${projectId}/api/folder/create/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({ parent_id: parentId, name: folderName })
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    loadTree(); // 생성 성공 시 트리를 다시 그립니다.
+                } else {
+                    alert('폴더 생성 실패');
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        
+        // 4. 파일 생성 API 호출
+        async function addFile(folderId) {
+            const fileName = prompt("새 파일 이름을 입력하세요 (예: main.py, README.md):");
+            if (!fileName) return;
+
+            try {
+                const response = await fetch(`/projects/${projectId}/api/file/create/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({ folder_id: folderId, name: fileName })
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    loadTree(); // 생성 성공 시 트리를 다시 그립니다.
+                } else {
+                    alert('파일 생성 실패');
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        // 💡 새롭게 추가된 삭제 함수
+        async function deleteItem(type, id, name) {
+            if (!confirm(`정말 [${name}]을(를) 삭제하시겠습니까?\n(폴더일 경우 내부의 모든 파일이 삭제됩니다!)`)) return;
+
+            try {
+                const response = await fetch(`/projects/${projectId}/api/vfs/delete/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({ type: type, id: id })
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    loadTree(); // 삭제 후 트리 갱신
+                } else {
+                    alert('삭제 실패: ' + (data.msg || '알 수 없는 오류'));
+                }
+            } catch (error) {
+                console.error(error);
+                alert('통신 중 오류가 발생했습니다.');
+            }
+        }
+let currentOpenedFileId = null; 
+        let currentEditor = null; // 💡 현재 활성화된 CodeMirror 에디터 객체 저장
+
+        // 5. 파일 클릭 시 우측 에디터에 내용 표시
+        async function openFile(fileId, fileName) {
+            currentOpenedFileId = fileId;
+            document.getElementById('currentFileName').innerText = fileName;
+            
+            const viewerContainer = document.querySelector('.custom-scrollbar.bg-slate-900');
+            
+            // 💡 쪼그맣게 나오는 원인이었던 중앙 정렬 클래스를 에디터 모드에서는 제거합니다.
+            viewerContainer.classList.remove('items-center', 'justify-center');
+            viewerContainer.innerHTML = '<div class="text-center text-slate-400 mt-20 w-full">파일을 불러오는 중...</div>';
+            
+            try {
+                const response = await fetch(`/projects/${projectId}/api/file/${fileId}/`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    const ext = fileName.split('.').pop().toLowerCase();
+                    
+                    if (['png', 'jpg', 'jpeg', 'gif'].includes(ext)) {
+                        viewerContainer.classList.add('items-center', 'justify-center');
+                        viewerContainer.innerHTML = `<div class="text-center text-slate-300">이미지 뷰어 모드 (${fileName})</div>`;
+                    } else if (['pdf'].includes(ext)) {
+                        viewerContainer.classList.add('items-center', 'justify-center');
+                        viewerContainer.innerHTML = `<div class="text-center text-slate-300">PDF 뷰어 모드 (${fileName})</div>`;
+                    } else {
+                        const block = data.blocks[0]; 
+                        
+                        viewerContainer.innerHTML = `
+                            <div class="w-full h-full flex flex-col relative">
+                                <div class="absolute top-2 right-4 z-10">
+                                    <button onclick="saveFileContent(${fileId}, ${block.id})" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition shadow-md flex items-center gap-1">
+                                        💾 저장하기
+                                    </button>
+                                </div>
+                                <div class="flex-1 w-full h-full pt-12 relative">
+                                    <textarea id="editorContent_${block.id}">${block.content}</textarea>
+                                </div>
+                            </div>
+                        `;
+
+                        // 💡 CodeMirror 적용 (라인 번호 생성 및 테마 적용)
+                        const textarea = document.getElementById(`editorContent_${block.id}`);
+                        currentEditor = CodeMirror.fromTextArea(textarea, {
+                            lineNumbers: true,          // 라인 번호 표시 활성화
+                            theme: "material-darker",   // 눈이 편안한 다크 테마
+                            mode: ext === 'py' ? 'python' : 'text/plain', // 파이썬일 경우 문법 색상 강조
+                            lineWrapping: true          // 자동 줄바꿈
+                        });
+                        
+                        // 에디터 크기를 컨테이너에 100% 꽉 맞춤
+                        currentEditor.setSize("100%", "100%");
+                    }
+                }
+            } catch (error) {
+                console.error(error);
+                viewerContainer.innerHTML = '<div class="text-center text-red-400 mt-20 w-full">파일 내용을 불러오는데 실패했습니다.</div>';
+            }
+        }
+
+        // 6. 에디터 내용 저장 로직
+        async function saveFileContent(fileId, blockId) {
+            // 💡 textarea가 아닌 CodeMirror 객체에서 직접 최신 텍스트 값을 가져옵니다.
+            const content = currentEditor.getValue();
+            
+            try {
+                const response = await fetch(`/projects/${projectId}/api/file/${fileId}/save/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({ block_id: blockId, content: content })
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    alert('성공적으로 저장되었습니다!');
+                } else {
+                    alert('저장 실패: ' + (data.msg || '알 수 없는 오류'));
+                }
+            } catch (error) {
+                console.error(error);
+                alert('통신 중 오류가 발생했습니다.');
+            }
+        }
+    </script>
+</body>
+</html>

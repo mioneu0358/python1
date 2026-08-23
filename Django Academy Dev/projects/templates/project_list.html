@@ -92,7 +92,7 @@
                                 {{ project.participant_count }}명
                             </td>
                             <td class="px-6 py-4 text-slate-600">
-                                {{ project.study_class.name|default:"개인 프로젝트" }}
+                                {{ project.team.name|default:"개인 프로젝트" }}
                             </td>
                             <td class="px-6 py-4 text-slate-500">
                                 {{ project.updated_at|date:"Y-m-d H:i" }}

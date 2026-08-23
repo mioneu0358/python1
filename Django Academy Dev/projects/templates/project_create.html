@@ -24,10 +24,10 @@
         <!-- 1. 프로젝트 이름 입력란 -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
             <label class="block text-sm font-bold text-slate-700 mb-2">프로젝트 이름</label>
-            <input type="text" id="projectTitle" placeholder="예) 24시간 자동 트레이딩 봇 골드웨이브" class="w-full px-4 py-3 border border-slate-300 rounded-xl text-lg font-bold focus:ring-2 focus:ring-indigo-500 outline-none">
+            <input type="text" id="projectTitle" placeholder="프로젝트 이름을 작성해주세요." class="w-full px-4 py-3 border border-slate-300 rounded-xl text-lg font-bold focus:ring-2 focus:ring-indigo-500 outline-none">
         </div>
 
-        <!-- 2. 기한 설정 & 반 선택 -->
+        <!-- 2. 기한 설정 & 팀/그룹 선택 -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- 기한 설정 -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
@@ -39,14 +39,18 @@
                 </div>
             </div>
 
-            <!-- 반 선택 -->
+            <!-- 팀/그룹 선택 -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
-                <label class="block text-sm font-bold text-slate-700 mb-2">소속 반</label>
-                <div class="flex items-center justify-between">
-                    <span id="selectedClassName" class="text-sm font-medium text-slate-600">개인 프로젝트 (선택된 반 없음)</span>
-                    <input type="hidden" id="selectedClassId" value="">
-                    <button onclick="openClassModal()" class="px-4 py-2 bg-slate-100 text-slate-700 text-sm font-bold rounded-xl hover:bg-slate-200 transition">
-                        반 선택
+                <div class="flex items-center justify-between mb-2">
+                    <label class="block text-sm font-bold text-slate-700">소속 팀/그룹</label>
+                    <span id="projectTypeLabel" class="text-xs font-bold px-2 py-1 bg-slate-100 text-slate-600 rounded-lg">👤 개인 프로젝트</span>
+                </div>
+                
+                <div class="flex items-center justify-between mt-auto">
+                    <span id="selectedTeamName" class="text-sm font-medium text-slate-600">선택된 팀 없음 (자유 구성)</span>
+                    <input type="hidden" id="selectedTeamId" value="">
+                    <button onclick="openTeamModal()" class="px-4 py-2 bg-slate-100 text-slate-700 text-sm font-bold rounded-xl hover:bg-slate-200 transition">
+                        팀 불러오기
                     </button>
                 </div>
             </div>
@@ -55,22 +59,23 @@
         <!-- 3. 참여 인원 및 리더 설정 -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
             <div class="relative">
-                <label class="block text-sm font-bold text-slate-700 mb-2">참여 인원 검색 및 추가</label>
+                <div class="flex justify-between items-center mb-2">
+                    <label class="block text-sm font-bold text-slate-700">참여 인원 검색 및 추가</label>
+                    <button onclick="saveAsNewTeam()" id="saveTeamBtn" class="hidden px-3 py-1.5 bg-indigo-50 text-indigo-600 text-xs font-bold rounded-lg hover:bg-indigo-100 transition">
+                        + 현재 인원으로 팀 만들기
+                    </button>
+                </div>
                 <input type="text" id="userSearchInput" placeholder="팀원 이름 검색 (예: 홍길동)" class="w-full px-4 py-2 border border-slate-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500" oninput="searchUsers(this.value)">
-                
-                <!-- 자동완성 드롭다운 -->
                 <div id="userSearchResults" class="absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg hidden z-20 max-h-48 overflow-y-auto"></div>
             </div>
 
-            <!-- 선택된 참여인원 리스트 및 리더 선택 -->
+            <!-- 참여인원 리스트 -->
             <div>
-                <label class="block text-sm font-bold text-slate-700 mb-2">참여 인원 및 리더 지정</label>
                 <div id="participantsList" class="space-y-2 border border-slate-200 rounded-xl p-4 bg-slate-50">
-                    <!-- 기본 생성자(본인) 기본 탑재 -->
-                    <div class="flex items-center justify-between bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm" data-userid="{{ request.user.id }}">
+                    <!-- 생성자 본인은 삭제 불가능한 기본 멤버 -->
+                    <div class="flex items-center justify-between bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm participant-item" data-userid="{{ request.user.id }}">
                         <div class="flex items-center gap-2">
-                            <span class="font-bold text-sm text-slate-900">{{ request.user.name|default:request.user.username }}</span>
-                            <span class="text-xs text-slate-400">({{ request.user.email }})</span>
+                            <span class="font-bold text-sm text-slate-900">{{ current_user_name }}</span>
                             <span class="bg-indigo-100 text-indigo-700 text-xs px-2 py-0.5 rounded-full font-bold">본인</span>
                         </div>
                         <label class="flex items-center gap-1.5 text-xs font-bold text-slate-600 cursor-pointer">
@@ -87,7 +92,7 @@
             <textarea id="projectDesc" rows="3" placeholder="프로젝트의 주요 목표나 개요를 적어주세요..." class="w-full px-4 py-2 border border-slate-300 rounded-xl text-sm outline-none resize-y"></textarea>
         </div>
 
-        <!-- 5. 프로젝트 단계 설정 (대분류 & 소분류 체크리스트) -->
+        <!-- 5. 프로젝트 단계 설정 -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
             <div class="flex justify-between items-center">
                 <h3 class="text-base font-bold text-slate-900">프로젝트 단계 설정</h3>
@@ -96,16 +101,21 @@
                 </button>
             </div>
 
-            <!-- 단계들이 들어갈 컨테이너 -->
             <div id="stagesContainer" class="space-y-4">
-                <!-- 기본 1단계 샘플 -->
                 <div class="stage-item bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3" data-stage-id="1">
-                    <div class="flex items-center justify-between gap-2">
+                   <div class="flex items-center justify-between gap-2">
                         <input type="text" value="1단계: 뼈대 만들기" class="stage-title-input flex-1 px-3 py-1.5 font-bold text-sm bg-white border border-slate-300 rounded-xl outline-none">
                         <button onclick="this.closest('.stage-item').remove()" class="text-xs text-red-500 hover:underline">단계 삭제</button>
                     </div>
                     
-                    <!-- 체크리스트(소분류) 컨테이너 -->
+                    <!-- 💡 새롭게 추가된 단계별 기간 설정 UI -->
+                    <div class="flex items-center gap-2 pl-1 mb-2">
+                        <span class="text-xs font-bold text-slate-500">📅 기간:</span>
+                        <input type="date" class="stage-start-date px-2 py-1 text-xs border border-slate-300 rounded-lg outline-none text-slate-600">
+                        <span class="text-xs text-slate-400">~</span>
+                        <input type="date" class="stage-end-date px-2 py-1 text-xs border border-slate-300 rounded-lg outline-none text-slate-600">
+                    </div>
+
                     <div class="checklist-container space-y-2 pl-4 border-l-2 border-indigo-200">
                         <div class="flex items-center gap-2">
                             <input type="text" value="요구사항 분석 및 아키텍처 초안 작성" class="checklist-input flex-1 px-3 py-1 text-xs bg-white border border-slate-200 rounded-lg outline-none">
@@ -119,25 +129,28 @@
                 </div>
             </div>
         </div>
-
     </main>
 
-    <!-- 반 선택 모달 (팝업) -->
-    <div id="classModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
+    <div id="teamModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
         <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-xl space-y-4">
-            <h3 class="font-bold text-lg text-slate-900">소속 반 선택</h3>
+            <h3 class="font-bold text-lg text-slate-900">소속 팀/그룹 선택</h3>
             <div class="space-y-2 max-h-60 overflow-y-auto">
-                <div onclick="selectClass('', '개인 프로젝트 (선택 안함)')" class="p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer text-sm font-medium">
-                    개인 프로젝트 (선택 안함)
+                <div onclick="selectTeam('', '선택된 팀 없음 (자유 구성)')" class="p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer text-sm font-medium">
+                    선택된 팀 없음 (자유 구성)
                 </div>
-                {% for c in classes %}
-                <div onclick="selectClass('{{ c.id }}', '{{ c.name }}')" class="p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer flex justify-between items-center">
-                    <span class="text-sm font-bold text-slate-800">{{ c.name }}</span>
-                    <span class="text-xs text-slate-500">{{ c.description|default:"" }}</span>
+                <!-- 백엔드에서 my_teams 컨텍스트를 받아와서 렌더링 -->
+                {% for team in my_teams %}
+                <div onclick="selectTeam('{{ team.id }}', '{{ team.name }}')" class="p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer flex justify-between items-center">
+                    <span class="text-sm font-bold text-slate-800">{{ team.name }}</span>
+                    {% if team.is_official %}
+                        <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">공식 반</span>
+                    {% else %}
+                        <span class="text-xs text-slate-500">학생 그룹</span>
+                    {% endif %}
                 </div>
                 {% endfor %}
             </div>
-            <button onclick="closeClassModal()" class="w-full py-2 bg-slate-900 text-white text-sm font-bold rounded-xl">닫기</button>
+            <button onclick="closeTeamModal()" class="w-full py-2 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-slate-800 transition">닫기</button>
         </div>
     </div>
 
@@ -147,16 +160,51 @@
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         let stageSeq = 1;
 
-        // --- 반 선택 모달 제어 ---
-        function openClassModal() { document.getElementById('classModal').classList.remove('hidden'); }
-        function closeClassModal() { document.getElementById('classModal').classList.add('hidden'); }
-        function selectClass(id, name) {
-            document.getElementById('selectedClassId').value = id;
-            document.getElementById('selectedClassName').innerText = name;
-            closeClassModal();
+        // --- 1. 팀 선택 모달 제어 ---
+        function openTeamModal() { document.getElementById('teamModal').classList.remove('hidden'); }
+        function closeTeamModal() { document.getElementById('teamModal').classList.add('hidden'); }
+        async function selectTeam(id, name) {
+            document.getElementById('selectedTeamId').value = id;
+            document.getElementById('selectedTeamName').innerText = name;
+            closeTeamModal();
+
+            // '선택된 팀 없음'을 눌렀을 때는 아무 동작도 하지 않음
+            if (!id) return; 
+
+            try {
+                const response = await fetch(`/projects/api/teams/${id}/members/`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    // 불러온 멤버들을 화면에 추가 (본인이 포함되어 있어도 addParticipant 내부에 중복 방지 로직이 있어 안전합니다)
+                    data.members.forEach(m => {
+                        addParticipant(m.id, m.name, m.email_prefix);
+                    });
+                }
+            } catch (error) {
+                console.error(error);
+                alert('팀원을 불러오는 중 오류가 발생했습니다.');
+            }
         }
 
-        // --- 참여 인원 검색 및 추가 로직 ---
+        // --- 2. 프로젝트 타입(개인/팀) 동적 라벨 업데이트 ---
+        function updateProjectInfo() {
+            const items = document.querySelectorAll('.participant-item');
+            const label = document.getElementById('projectTypeLabel');
+            const saveTeamBtn = document.getElementById('saveTeamBtn');
+            
+            if (items.length > 1) {
+                label.innerHTML = '👥 팀 프로젝트';
+                label.className = 'text-xs font-bold px-2 py-1 bg-indigo-100 text-indigo-700 rounded-lg';
+                saveTeamBtn.classList.remove('hidden'); 
+            } else {
+                label.innerHTML = '👤 개인 프로젝트';
+                label.className = 'text-xs font-bold px-2 py-1 bg-slate-100 text-slate-600 rounded-lg';
+                saveTeamBtn.classList.add('hidden');
+            }
+        }
+
+        // --- 3. 참여 인원 검색 및 추가 로직 ---
         let searchTimeout;
         async function searchUsers(query) {
             clearTimeout(searchTimeout);
@@ -188,7 +236,7 @@
 
         function addParticipant(id, name, emailPrefix) {
             const container = document.getElementById('participantsList');
-            // 중복 추가 방지
+            // 중복 방지
             if (container.querySelector(`[data-userid="${id}"]`)) {
                 document.getElementById('userSearchResults').classList.add('hidden');
                 document.getElementById('userSearchInput').value = '';
@@ -196,7 +244,7 @@
             }
 
             const html = `
-                <div class="flex items-center justify-between bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm" data-userid="${id}">
+                <div class="flex items-center justify-between bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm participant-item" data-userid="${id}">
                     <div class="flex items-center gap-2">
                         <span class="font-bold text-sm text-slate-900">${name}</span>
                         <span class="text-xs text-slate-400">(@${emailPrefix})</span>
@@ -205,16 +253,55 @@
                         <label class="flex items-center gap-1.5 text-xs font-bold text-slate-600 cursor-pointer">
                             <input type="radio" name="projectLeader" value="${id}" class="text-indigo-600"> 리더
                         </label>
-                        <button onclick="this.closest('[data-userid]').remove()" class="text-xs text-red-500 hover:underline">제거</button>
+                        <button onclick="removeParticipant(this)" class="text-xs text-red-500 hover:underline">제거</button>
                     </div>
                 </div>
             `;
             container.insertAdjacentHTML('beforeend', html);
             document.getElementById('userSearchResults').classList.add('hidden');
             document.getElementById('userSearchInput').value = '';
+            
+            updateProjectInfo(); // 💡 라벨 즉시 반영
         }
 
-        // --- 단계 및 체크리스트 동적 추가 ---
+        function removeParticipant(btnElement) {
+            btnElement.closest('[data-userid]').remove();
+            updateProjectInfo(); // 💡 라벨 즉시 반영
+        }
+
+        // --- 4. 현재 인원으로 새 팀 만들기 (AJAX) ---
+        async function saveAsNewTeam() {
+            const teamName = prompt("저장할 팀/그룹 이름을 입력하세요:\n(예: 골드웨이브 개발 1팀)");
+            if (!teamName) return;
+
+            const memberIds = [];
+            document.querySelectorAll('.participant-item').forEach(el => {
+                const id = el.getAttribute('data-userid');
+                if (id !== "{{ request.user.id }}") memberIds.push(id);
+            });
+
+            try {
+                const response = await fetch('/projects/api/create-team/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({ name: teamName, member_ids: memberIds })
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    alert(`'${data.team_name}' 팀이 성공적으로 생성되었습니다!`);
+                    document.getElementById('selectedTeamId').value = data.team_id;
+                    document.getElementById('selectedTeamName').innerText = data.team_name;
+                } else {
+                    alert('팀 생성에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error(error);
+                alert('통신 중 오류가 발생했습니다.');
+            }
+        }
+
+        // --- 5. 단계 및 체크리스트 동적 추가 ---
         function addStage() {
             stageSeq++;
             const container = document.getElementById('stagesContainer');
@@ -224,6 +311,15 @@
                         <input type="text" placeholder="단계명을 입력하세요 (예: 2단계: 핵심 로직 구현)" class="stage-title-input flex-1 px-3 py-1.5 font-bold text-sm bg-white border border-slate-300 rounded-xl outline-none">
                         <button onclick="this.closest('.stage-item').remove()" class="text-xs text-red-500 hover:underline">단계 삭제</button>
                     </div>
+                    
+                    <!-- 💡 동적 추가되는 부분에도 날짜 UI 포함 -->
+                    <div class="flex items-center gap-2 pl-1 mb-2">
+                        <span class="text-xs font-bold text-slate-500">📅 기간:</span>
+                        <input type="date" class="stage-start-date px-2 py-1 text-xs border border-slate-300 rounded-lg outline-none text-slate-600">
+                        <span class="text-xs text-slate-400">~</span>
+                        <input type="date" class="stage-end-date px-2 py-1 text-xs border border-slate-300 rounded-lg outline-none text-slate-600">
+                    </div>
+
                     <div class="checklist-container space-y-2 pl-4 border-l-2 border-indigo-200">
                         <div class="flex items-center gap-2">
                             <input type="text" placeholder="체크리스트 내용" class="checklist-input flex-1 px-3 py-1 text-xs bg-white border border-slate-200 rounded-lg outline-none">
@@ -249,47 +345,52 @@
             clContainer.insertAdjacentHTML('beforeend', html);
         }
 
-        // --- 최종 프로젝트 저장 로직 ---
+        // --- 6. 최종 프로젝트 저장 로직 ---
         document.getElementById('saveProjectBtn').addEventListener('click', async () => {
             const title = document.getElementById('projectTitle').value.trim();
             if (!title) { alert('프로젝트 이름을 입력해주세요.'); return; }
 
             const startDate = document.getElementById('startDate').value;
             const endDate = document.getElementById('endDate').value;
-            const classId = document.getElementById('selectedClassId').value;
+            
+            // 💡 teamId로 올바르게 수집
+            const teamId = document.getElementById('selectedTeamId').value;
             const description = document.getElementById('projectDesc').value;
 
-            // 참여 인원 ID 수집
             const participantIds = [];
             document.querySelectorAll('#participantsList [data-userid]').forEach(el => {
                 participantIds.push(el.getAttribute('data-userid'));
             });
 
-            // 리더 ID 수집
             const leaderRadio = document.querySelector('input[name="projectLeader"]:checked');
             const leaderId = leaderRadio ? leaderRadio.value : participantIds[0];
 
-            // 단계 및 체크리스트 구조 수집
             const stagesData = [];
             document.querySelectorAll('.stage-item').forEach((stageEl, sIndex) => {
                 const stageName = stageEl.querySelector('.stage-title-input').value.trim();
                 if (!stageName) return;
+
+                // 💡 날짜 데이터 수집
+                const stageStartDate = stageEl.querySelector('.stage-start-date').value;
+                const stageEndDate = stageEl.querySelector('.stage-end-date').value;
 
                 const checklists = [];
                 stageEl.querySelectorAll('.checklist-input').forEach(clEl => {
                     const clText = clEl.value.trim();
                     if (clText) checklists.push(clText);
                 });
-
-                stagesData.push({
-                    name: stageName,
-                    order: sIndex,
-                    checklists: checklists
+                
+                stagesData.push({ 
+                    name: stageName, 
+                    order: sIndex, 
+                    start_date: stageStartDate, 
+                    end_date: stageEndDate, 
+                    checklists: checklists 
                 });
             });
-
+            // 💡 classId 대신 teamId 전송
             const payload = {
-                title, description, startDate, endDate, classId,
+                title, description, start_date: startDate, end_date: endDate, teamId,
                 participantIds, leaderId, stages: stagesData
             };
 
