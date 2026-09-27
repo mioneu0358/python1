@@ -61,15 +61,9 @@ class KiwoomRestAPI:
         headers = self.get_headers(api_id='ka00001', cont_yn=cont_yn, next_key=next_key)
         
         # API 명세서에 따른 빈 파라미터 전달
-        params = {}
-        
-        response = requests.post(url, headers=headers, json=params)
-        
-        # 응답 상태 확인 및 출력
-        print('Code:', response.status_code)
-        print('Header:', json.dumps({key: response.headers.get(key) for key in ['next-key', 'cont-yn', 'api-id']}, indent=4, ensure_ascii=False))
-        print('Body:', json.dumps(response.json(), indent=4, ensure_ascii=False))
-        
+        params = {}        
+        response = requests.post(url, headers=headers, json=params)        
+
         return response.json()
 
     def get_account_balance(self, qry_tp='1', dmst_stex_tp='KRX', cont_yn='N', next_key=''):
@@ -88,13 +82,24 @@ class KiwoomRestAPI:
         
         response = requests.post(url, headers=headers, json=params)
         
-        # 응답 상태 확인 및 출력
-        print('Code:', response.status_code)
-        print('Header:', json.dumps({key: response.headers.get(key) for key in ['next-key', 'cont-yn', 'api-id']}, indent=4, ensure_ascii=False))
-        print('Body:', json.dumps(response.json(), indent=4, ensure_ascii=False))
-        
         return response.json()
 
+    def get_daily_realized_pl(self, strt_dt, end_dt, cont_yn='N', next_key=''):
+        """일자별실현손익요청 (TR: ka10074)"""
+        endpoint = '/api/dostk/acnt'
+        url = self.base_url + endpoint
+        
+        headers = self.get_headers(api_id='ka10074', cont_yn=cont_yn, next_key=next_key)
+        
+        params = {
+            'strt_dt': strt_dt,
+            'end_dt': end_dt
+        }
+        
+        response = requests.post(url, headers=headers, json=params)
+        print(response.json())
+        return response.json()
+    
 if __name__ == "__main__":
     load_dotenv()
     appkey = os.getenv("APPKEY")
