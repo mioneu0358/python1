@@ -99,7 +99,19 @@ class KiwoomRestAPI:
         response = requests.post(url, headers=headers, json=params)
         print(response.json())
         return response.json()
-    
+
+    def get_stock_info_list(self, mrkt_tp='0', cont_yn='N', next_key=''):
+        """종목정보 리스트 요청 (TR: ka10099)"""
+        endpoint = '/api/dostk/stkinfo'
+        url = self.base_url + endpoint
+        
+        headers = self.get_headers(api_id='ka10099', cont_yn=cont_yn, next_key=next_key)
+        params = {'mrkt_tp': mrkt_tp}
+        
+        response = requests.post(url, headers=headers, json=params)
+        return response.json()
+
+            
 if __name__ == "__main__":
     load_dotenv()
     appkey = os.getenv("APPKEY")

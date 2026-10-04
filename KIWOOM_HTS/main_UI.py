@@ -15,8 +15,12 @@ from dotenv import load_dotenv, set_key
 from datetime import datetime
 
 
-class AccountBalanceWorker(QThread):
-    finished = Signal(bool, dict)
+from datetime import datetime
+from PySide6.QtCore import QThread, Signal
+
+class SystemInitWorker(QThread):
+    # (성공여부, 잔고데이터, 종목리스트) 반환
+    finished = Signal(bool, dict, list)
 
     def __init__(self, api_handler):
         super().__init__()
@@ -24,29 +28,32 @@ class AccountBalanceWorker(QThread):
 
     def run(self):
         try:
-            # 1. 잔고 조회 호출
+            # 1. 잔고 및 실현손익 조회 (기존 로직)
             balance_result = self.api.get_account_balance()
+            today_str = datetime.now().strftime("%Y%m%d")
+            realized_result = self.api.get_daily_realized_pl(today_str, today_str)
             
             if balance_result.get("return_code") == 0:
-                # 2. 오늘 날짜를 YYYYMMDD 포맷으로 생성
-                today_str = datetime.now().strftime("%Y%m%d")
-                
-                # 3. 당일 실현손익 조회 (ka10074)
-                realized_result = self.api.get_daily_realized_pl(today_str, today_str)
-                print(f"당일 실현 손익결과: {realized_result.get("return_code") }")
-                # 정상 응답 시 실현손익 값(rlzt_pl)을 balance_result에 합침
-                if realized_result.get("return_code") == 0:
-                    balance_result["rlzt_pl"] = realized_result.get("rlzt_pl", "0")
-                else:
-                    balance_result["rlzt_pl"] = "0"
-
-                self.finished.emit(True, balance_result)
-            else:
-                self.finished.emit(False, balance_result)
+                balance_result["rlzt_pl"] = realized_result.get("rlzt_pl", "0") if realized_result.get("return_code") == 0 else "0"
+            
+            # 2. 종목 마스터 데이터 수집 (코스피: '0', 코스닥: '10')
+            kospi_res = self.api.get_stock_info_list(mrkt_tp='0')
+            kosdaq_res = self.api.get_stock_info_list(mrkt_tp='10')
+            
+            master_list = []
+            # 응답받은 두 시장의 리스트를 순회하며 "종목명 (종목코드)" 형태의 문자열 리스트 생성
+            for res in (kospi_res, kosdaq_res):
+                if res.get("return_code") == 0:
+                    for stock in res.get("list", []):
+                        # 예: "삼성전자 (005930)"
+                        master_list.append(f"{stock['name']} ({stock['code']})")
+            # print(f"SystemInitWorker - master_list:{master_list}")
+            self.finished.emit(True, balance_result, master_list)
                 
         except Exception as e:
-            self.finished.emit(False, {"return_msg": str(e)})
+            self.finished.emit(False, {"return_msg": str(e)}, [])
 
+            
 class LoginDialog(QDialog):
     def __init__(self, api_handler):
         super().__init__()
@@ -441,7 +448,7 @@ class HTSMainWindow(QMainWindow):
         self.hoga_table.setShowGrid(True)
         self.hoga_table.setStyleSheet(table_css)
         layout.addWidget(self.hoga_table)
-        
+
         # --- 2. 매수/매도 주문 패널 ---
         order_group = QGroupBox("매수/매도 주문")
         order_group.setStyleSheet("""
@@ -574,7 +581,7 @@ class HTSMainWindow(QMainWindow):
         """Worker 스레드를 생성하여 잔고 조회를 시작합니다."""
         self.statusbar.showMessage("잔고 데이터를 불러오는 중...")
         
-        self.balance_worker = AccountBalanceWorker(self.api)
+        self.balance_worker = SystemInitWorker(self.api)
         self.balance_worker.finished.connect(self.update_balance_ui)
         self.balance_worker.start()
 
@@ -667,6 +674,40 @@ class HTSMainWindow(QMainWindow):
 
         self.statusbar.showMessage("잔고 조회 완료", 3000)
 
+    def fetch_initial_data(self):
+        """앱 시작 시 잔고와 종목 마스터 데이터를 긁어옵니다."""
+        self.statusbar.showMessage("시스템 초기화 및 데이터 로딩 중...")
+        self.init_worker = SystemInitWorker(self.api)
+        self.init_worker.finished.connect(self.update_initial_ui)
+        self.init_worker.start()
+
+    def update_initial_ui(self, success, balance_data, master_list):
+        if not success:
+            self.statusbar.showMessage("초기화 통신 에러 발생", 5000)
+            return
+
+        # 1. 잔고 및 실현손익 UI 업데이트 (기존 작성한 update_balance_ui 로직 재활용)
+        # self.update_balance_ui(success, balance_data) 
+        
+        # 2. 검색창 자동완성 (QCompleter) 세팅
+        if master_list:
+            # 리스트 모델 생성
+            model = QStringListModel(master_list)
+            
+            # 자동완성 객체 생성
+            completer = QCompleter()
+            completer.setModel(model)
+            
+            # 대소문자 구분 없이, 중간 글자만 쳐도 검색되도록 설정 (예: '전자' 치면 '삼성전자' 나옴)
+            completer.setCaseSensitivity(Qt.CaseInsensitive)
+            completer.setFilterMode(Qt.MatchContains)
+            
+            # 입력창에 연결
+            self.search_box.setCompleter(completer)
+            
+            self.statusbar.showMessage(f"초기화 완료 (종목 {len(master_list)}개 로드)", 3000)
+
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
@@ -691,7 +732,7 @@ if __name__ == "__main__":
         }
     """)
     
-    
+
     # 1. API 핸들러 인스턴스를 빈 키로 먼저 생성합니다.
     kiwoom_api = KiwoomRestAPI(app_key="", app_secret="", is_mock=True)
     
@@ -711,3 +752,4 @@ if __name__ == "__main__":
     else:
         # 로그인 창을 그냥 'X' 버튼으로 끄거나 취소하면 프로그램이 완전히 종료됩니다.
         sys.exit()
+   
