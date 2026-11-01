@@ -5,9 +5,10 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                                QTabWidget, QComboBox, QSpinBox, QPushButton, 
                                QStatusBar, QDialog, QGroupBox, QHeaderView, 
                                QToolBar, QMenuBar, QColorDialog, QCheckBox, QMessageBox,
-                               QSplitter, QFrame, QGridLayout, QTableWidgetItem, QCompleter, QAbstractItemView)
-from PySide6.QtCore import Qt, QTimer, QStringListModel
-from PySide6.QtGui import QAction, QColor
+                               QSplitter, QFrame, QGridLayout, QTableWidgetItem, QCompleter, QAbstractItemView,QMenu)
+from PySide6.QtCore import Qt, QTimer, QStringListModel, QRectF
+from PySide6.QtGui import QAction, QColor, QPainter, QPicture, QCursor
+import pyqtgraph as pg
 
 from dotenv import load_dotenv, set_key
 
@@ -139,7 +140,6 @@ class AlgoSettingsDialog(QDialog):
         
         algo_group.setLayout(algo_layout)
         layout.addWidget(algo_group)
-
 
 class BalanceDialog(QDialog):
     def __init__(self, parent, api_handler):
@@ -305,6 +305,236 @@ class BalanceDialog(QDialog):
                     item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter) # 숫자는 우측 정렬
                 self.balance_table.setItem(row, col, item)
 
+pg.setConfigOption('background', '#1e1e1e')
+pg.setConfigOption('foreground', '#d4d4d4')
+
+class CandlestickItem(pg.GraphicsObject):
+    """PyQtGraph를 이용한 캔들스틱 렌더링 커스텀 아이템"""
+    def __init__(self, data):
+        super().__init__()
+        self.data = data  # data = [(t, open, high, low, close, volume), ...]
+        self.generatePicture()
+
+    def generatePicture(self):
+        self.picture = QPicture()
+        p = QPainter(self.picture)
+        p.setPen(pg.mkPen('w'))
+        w = 0.3 # 캔들 몸통 두께
+        
+        for (t, open, high, low, close, volume) in self.data:
+            # 양봉(빨강), 음봉(파랑), 보합(흰색)
+            if close > open:
+                p.setPen(pg.mkPen('#ff4c4c'))
+                p.setBrush(pg.mkBrush('#ff4c4c'))
+            elif close < open:
+                p.setPen(pg.mkPen('#4c8cff'))
+                p.setBrush(pg.mkBrush('#4c8cff'))
+            else:
+                p.setPen(pg.mkPen('w'))
+                p.setBrush(pg.mkBrush('w'))
+                
+            # 꼬리 그리기 (High-Low)
+            p.drawLine(pg.Point(t, low), pg.Point(t, high))
+            # 몸통 그리기 (Open-Close)
+            p.drawRect(QRectF(t - w, open, w * 2, close - open))
+            
+        p.end()
+
+    def paint(self, p, *args):
+        p.drawPicture(0, 0, self.picture)
+
+    def boundingRect(self):
+        return QRectF(self.picture.boundingRect())  
+# ---  X축 시간 표시 커스텀 축 ---
+class TimeAxisItem(pg.AxisItem):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.x_labels = {} # {index: "시간포맷"}
+
+    def update_labels(self, labels_dict):
+        self.x_labels = labels_dict
+
+    def tickStrings(self, values, scale, spacing):
+        # 500, 501 같은 숫자를 "10:30" 같은 시간 문자열로 변환
+        return [self.x_labels.get(int(value), "") for value in values]
+
+# ---  Y축 가격 콤마 표시 커스텀 축 ---
+class PriceAxisItem(pg.AxisItem):
+    def tickStrings(self, values, scale, spacing):
+        return [f"{int(value):,}" for value in values]
+
+
+
+# --- 독립된 1개의 차트 탭 위젯 (툴바 + 십자선 + 정보표시 통합) ---
+class SingleChartTab(QWidget):
+    def __init__(self, parent_main, stock_code, initial_tf="분봉(5분)"):
+        super().__init__()
+        self.main_ui = parent_main
+        self.stock_code = stock_code
+        self.chart_data = []
+        
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        
+        # 1) 개별 탭 툴바
+        self.toolbar = QToolBar()
+        self.tf_combo = QComboBox()
+        self.tf_combo.addItems(["일봉", "주봉", "월봉", "분봉(1분)", "분봉(3분)", "분봉(5분)", "틱(10틱)"])
+        self.tf_combo.setCurrentText(initial_tf)
+        self.tf_combo.setMinimumWidth(100) # [수정] 글자가 잘리지 않도록 최소 너비 확장
+        self.tf_combo.currentTextChanged.connect(self.request_new_data)
+        self.toolbar.addWidget(self.tf_combo)
+        
+        self.toolbar.addSeparator()
+        self.toolbar.addAction("✏️ 추세선")
+        self.toolbar.addWidget(QPushButton("선 색상"))
+        self.toolbar.addSeparator()
+        
+        # [수정] 지표 추가 콤보박스 부활
+        self.indicator_combo = QComboBox()
+        self.indicator_combo.addItems(["지표 추가 ▼", "이동평균선", "볼린저밴드", "MACD", "RSI"])
+        self.indicator_combo.setMinimumWidth(110)
+        self.toolbar.addWidget(self.indicator_combo)
+        
+        self.info_label = QLabel(" 차트에 마우스를 올리면 정보가 표시됩니다.")
+        self.info_label.setStyleSheet("color: #ffcc00; font-weight: bold; padding: 2px;")
+        
+        layout.addWidget(self.toolbar)
+        layout.addWidget(self.info_label)
+
+        # 2) 차트 뷰 생성
+        self.x_axis = TimeAxisItem(orientation='bottom')
+        self.y_axis = PriceAxisItem(orientation='left')
+        self.chart_view = pg.PlotWidget(axisItems={'bottom': self.x_axis, 'left': self.y_axis})
+        self.chart_view.showGrid(x=True, y=True, alpha=0.3)
+        
+        # [수정] pyqtgraph 기본 우클릭 메뉴 비활성화 및 커스텀 메뉴 연결
+        self.chart_view.setMenuEnabled(False) 
+        self.chart_view.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.chart_view.customContextMenuRequested.connect(self.show_custom_context_menu)
+        
+        # [수정] 마우스 조작: 세로 이동/확대 금지 (가로로만 이동/확대 가능)
+        self.chart_view.getViewBox().setMouseEnabled(x=True, y=False)
+        # 가로 범위(X축)가 바뀔 때마다 Y축(가격) 범위를 자동으로 맞추는 시그널 연결
+        self.chart_view.getViewBox().sigXRangeChanged.connect(self.update_y_auto_scale)
+
+        layout.addWidget(self.chart_view)
+
+        # 3) 십자선 세팅
+        self.vLine = pg.InfiniteLine(angle=90, movable=False, pen=pg.mkPen(color='gray', style=Qt.DashLine))
+        self.hLine = pg.InfiniteLine(angle=0, movable=False, pen=pg.mkPen(color='gray', style=Qt.DashLine))
+        self.chart_view.addItem(self.vLine, ignoreBounds=True)
+        self.chart_view.addItem(self.hLine, ignoreBounds=True)
+        
+        self.proxy = pg.SignalProxy(self.chart_view.scene().sigMouseMoved, rateLimit=60, slot=self.mouseMoved)
+        self.request_new_data()
+
+    def show_custom_context_menu(self, pos):
+        """우클릭 시 호출되는 우리가 만든 커스텀 메뉴"""
+        menu = QMenu(self)
+        menu.setStyleSheet("QMenu { background-color: #2d2d30; color: white; border: 1px solid #555; } QMenu::item:selected { background-color: #3e3e42; }")
+        
+        fav_action = QAction(f"⭐ '{self.stock_code}' 즐겨찾기 추가", self)
+        # fav_action.triggered.connect(...) # 나중에 즐겨찾기 트리와 연결
+        menu.addAction(fav_action)
+        
+        menu.addSeparator()
+        
+        buy_action = QAction(f"🔴 '{self.stock_code}' 매수 주문", self)
+        sell_action = QAction(f"🔵 '{self.stock_code}' 매도 주문", self)
+        menu.addAction(buy_action)
+        menu.addAction(sell_action)
+        
+        menu.exec_(QCursor.pos())
+
+    def update_y_auto_scale(self):
+        """현재 화면에 보이는 X축 범위 내의 봉들만 계산해서 Y축(가격) 높낮이를 자동 조절합니다."""
+        if not self.chart_data: return
+        
+        # 현재 화면에 보이는 X축 최소/최대 인덱스
+        view_range = self.chart_view.viewRange()
+        x_min, x_max = int(view_range[0][0]), int(view_range[0][1])
+        
+        # 데이터 범위를 벗어나지 않게 보정
+        x_min = max(0, x_min)
+        x_max = min(len(self.chart_data) - 1, x_max)
+        
+        if x_min >= x_max: return
+        
+        # 보이는 범위 내의 고가(High)와 저가(Low) 수집
+        visible_data = self.chart_data[x_min:x_max+1]
+        max_price = max([row[2] for row in visible_data])
+        min_price = min([row[3] for row in visible_data])
+        
+        # 위아래 5% 여백을 두고 Y축 강제 고정
+        margin = (max_price - min_price) * 0.05
+        if margin == 0: margin = max_price * 0.01
+        self.chart_view.getViewBox().setYRange(min_price - margin, max_price + margin, padding=0)
+
+    def request_new_data(self):
+        """콤보박스 변경 시 자신의 탭 데이터만 다시 불러옴"""
+        selected_tf = self.tf_combo.currentText()
+        # 주의: 메인 창의 api 객체를 참조함
+        self.worker = ChartDataWorker(self.main_ui.api, self.stock_code, selected_tf)
+        self.worker.finished.connect(self.draw_chart)
+        self.worker.start()
+
+    def draw_chart(self, success, stock_code, chart_data):
+        if not success or not chart_data: return
+        self.chart_data = chart_data
+        self.chart_view.clear() # 기존 캔들 삭제
+        self.chart_view.addItem(self.vLine, ignoreBounds=True)
+        self.chart_view.addItem(self.hLine, ignoreBounds=True)
+        
+        # X축 시간 매핑 데이터 생성 (포맷팅)
+        x_dict = {}
+        for (i, o, h, l, c, v, dt_str) in chart_data:
+            # 예: "20261101153000" -> "11/01 15:30", "20261101" -> "11/01"
+            if len(dt_str) >= 12: 
+                fmt_str = f"{dt_str[4:6]}/{dt_str[6:8]} {dt_str[8:10]}:{dt_str[10:12]}"
+            else:
+                fmt_str = f"{dt_str[0:4]}/{dt_str[4:6]}/{dt_str[6:8]}"
+            x_dict[i] = fmt_str
+            
+        self.x_axis.update_labels(x_dict)
+        
+        # 캔들스틱 그리기 (시간 튜플에서 time_str을 제외하고 넘김)
+        pure_ohlc = [(row[0], row[1], row[2], row[3], row[4], row[5]) for row in chart_data]
+        candlestick = CandlestickItem(pure_ohlc)
+        self.chart_view.addItem(candlestick)
+        
+        # 확대/축소 제한 (Limits) 설정
+        # y축 최소/최고가 찾기
+        min_y = min([row[3] for row in chart_data])
+        max_y = max([row[2] for row in chart_data])
+        margin = (max_y - min_y) * 0.1
+        
+        # # x축은 -5 ~ 데이터길이+5 까지만 이동 가능하게 제한
+        # self.chart_view.setLimits(xMin=-5, xMax=len(chart_data)+5, 
+        #                           yMin=min_y - margin, yMax=max_y + margin)
+        self.chart_view.autoRange()
+
+    def mouseMoved(self, evt):
+        pos = evt[0]
+        if self.chart_view.sceneBoundingRect().contains(pos):
+            mousePoint = self.chart_view.plotItem.vb.mapSceneToView(pos)
+            index = int(round(mousePoint.x()))
+            
+            # 십자선 이동
+            self.vLine.setPos(mousePoint.x())
+            self.hLine.setPos(mousePoint.y())
+            
+            # 인덱스가 데이터 범위 안일 때 상단 라벨에 OHLC 업데이트
+            if 0 <= index < len(self.chart_data):
+                row = self.chart_data[index]
+                time_val = self.x_axis.x_labels.get(index, "")
+                o, h, l, c, v = row[1], row[2], row[3], row[4], row[5]
+                # 등락률 계산 (전 캔들 대비가 아닌 단순히 시가 대비로 임시 표시, API에서 전일대비 받아와서 적용가능)
+                self.info_label.setText(
+                    f"[{time_val}]  시가: {o:,}  고가: {h:,}  저가: {l:,}  종가: {c:,}  거래량: {v:,}"
+                )
+
+
 class HTSMainWindow(QMainWindow):
     def __init__(self, api_handler):
         super().__init__()
@@ -341,74 +571,43 @@ class HTSMainWindow(QMainWindow):
         sys_menu.addAction(algo_action)
 
     def setup_central_chart(self):
-        # \"\"\"중앙 차트 영역 (차트 툴바 + 탭 구조)\"\"\"
         central_widget = QWidget()
         central_layout = QVBoxLayout(central_widget)
         central_layout.setContentsMargins(0, 0, 0, 0)
         
-        # 1. 차트 툴바 (항상 표시됨)
-        chart_toolbar = QToolBar("차트 도구")
-        chart_toolbar.setMovable(False)
+        # [수정] 메인 툴바를 다시 살려서 프로그램 전역 기능(잔고조회 등) 배치
+        main_toolbar = QToolBar("메인 도구")
+        main_toolbar.setMovable(False)
+        main_toolbar.setStyleSheet("background-color: #252526; border-bottom: 1px solid #333;")
         
-        # 봉 선택
-        timeframe_combo = QComboBox()
-        timeframe_combo.addItems(["일봉", "주봉", "월봉", "분봉(1분)", "분봉(3분)", "틱(10틱)"])
-        chart_toolbar.addWidget(timeframe_combo)
-        chart_toolbar.addSeparator()
-        
-        # 그리기 도구
-        draw_line_action = QAction("✏️ 추세선 긋기", self)
-        chart_toolbar.addAction(draw_line_action)
-        
-        color_btn = QPushButton("선 색상")
-        color_btn.clicked.connect(self.select_color)
-        chart_toolbar.addWidget(color_btn)
-        chart_toolbar.addSeparator()
-        
-        # 보조지표
-        indicator_combo = QComboBox()
-        indicator_combo.addItems(["지표 추가 ▼", "이동평균선", "볼린저밴드", "MACD", "RSI"])
-        chart_toolbar.addWidget(indicator_combo)
-        
-        # 분할 화면 버튼 (추후 구현 예정)
-        chart_toolbar.addSeparator()
-        split_btn = QPushButton("🪟 화면 분할(예정)")
-        split_btn.setEnabled(False)
-        chart_toolbar.addWidget(split_btn)
-
-        central_layout.addWidget(chart_toolbar)
-
-
-        chart_toolbar.addSeparator()
-        balance_btn = QPushButton("💰 내 잔고 확인")
-        balance_btn.setStyleSheet("background-color: #2b5797; color: white; font-weight: bold; padding: 5px;")
+        balance_btn = QPushButton("💰 내 잔고 현황 (새창)")
+        balance_btn.setStyleSheet("background-color: #2b5797; color: white; font-weight: bold; padding: 6px 12px; margin: 2px;")
         balance_btn.clicked.connect(self.open_balance_dialog)
-        chart_toolbar.addWidget(balance_btn)
-        # 2. 차트 탭 (종목별 유지)
+        main_toolbar.addWidget(balance_btn)
+        
+        central_layout.addWidget(main_toolbar)
+
         self.chart_tabs = QTabWidget()
-        self.chart_tabs.setTabsClosable(True) # 탭 닫기 버튼 활성화
+        self.chart_tabs.setTabsClosable(True)
         self.chart_tabs.tabCloseRequested.connect(self.close_chart_tab)
         
-        # 기본 안내 화면 (선택된 종목이 없을 때)
-        default_chart = QLabel("종목을 선택하거나 검색하여 차트를 엽니다.\\n(상단 툴바를 이용해 지표 및 선 긋기 가능)")
+        default_chart = QLabel("종목을 검색하면 독립된 차트 탭이 생성됩니다.")
         default_chart.setAlignment(Qt.AlignCenter)
-        default_chart.setStyleSheet("background-color: #555555; color: #888888; font-size: 16px;")
+        default_chart.setStyleSheet("background-color: #1e1e1e; color: #888888; font-size: 16px;")
         self.chart_tabs.addTab(default_chart, "기본 차트")
-        
         
         central_layout.addWidget(self.chart_tabs)
         self.setCentralWidget(central_widget)
 
+        
     def open_balance_dialog(self):
             dialog = BalanceDialog(self, self.api)
             dialog.exec()
 
     def close_chart_tab(self, index):
-        """
-        탭 닫기 기능
-        """
-        if self.chart_tabs.count() > 1: # 마지막 탭은 남겨둠
+        if self.chart_tabs.count() > 1:
             self.chart_tabs.removeTab(index)
+
 
     def select_color(self):
         """
@@ -603,22 +802,39 @@ class HTSMainWindow(QMainWindow):
             self.statusbar.showMessage(f"[{stock_code}] 데이터 조회 중...", 3000)
             self.search_box.clearFocus()
             
-            # --- 차트 데이터 워커 실행 ---
-            # self.chart_worker = ChartDataWorker(self.api, stock_code, "일봉")
-            # self.chart_worker.start()
+            # --- 1. 새로운 5분봉 전용 탭을 생성해서 탭에 끼워넣기 ---
+            new_tab = SingleChartTab(self, stock_code, initial_tf="분봉(5분)")
+            # 탭 제목에 종목명과 코드 표시 (딕셔너리 키를 활용하거나 역방향 탐색)
+            stock_name = search_text.split(" (")[0] 
+            tab_index = self.chart_tabs.addTab(new_tab, f"{stock_name} ({stock_code})")
+            self.chart_tabs.setCurrentIndex(tab_index) # 생성한 탭으로 화면 전환
             
-            # --- 호가창 주기적 갱신 세팅 ---
+            # --- 2. 호가창 주기적 갱신 세팅 ---
             self.current_hoga_code = stock_code
-            self.request_hoga_update() # 최초 1회 즉시 실행
-            
-            # QTimer를 이용해 1.5초(1500ms)마다 백그라운드 갱신
+            self.request_hoga_update()
             if not hasattr(self, 'hoga_timer'):
                 self.hoga_timer = QTimer(self)
                 self.hoga_timer.timeout.connect(self.request_hoga_update)
             self.hoga_timer.start(1500) 
-            
         else:
             self.statusbar.showMessage(f"해당 종목을 찾을 수 없습니다: {search_text}", 5000)
+    
+
+    def update_chart_ui(self, success, stock_code, chart_data):
+        """ChartDataWorker 완료 시 캔들스틱을 렌더링합니다."""
+        if not success or not chart_data:
+            self.statusbar.showMessage(f"[{stock_code}] 차트 데이터 조회 실패", 5000)
+            return
+            
+        self.chart_view.clear()
+        
+        # 커스텀 캔들스틱 아이템 생성 후 뷰에 추가
+        candlestick = CandlestickItem(chart_data)
+        self.chart_view.addItem(candlestick)
+        self.chart_view.setTitle(f"[{stock_code}] {self.timeframe_combo.currentText()}")
+        
+        # 차트 높낮이 자동 맞춤
+        self.chart_view.autoRange()
 
     def request_hoga_update(self):
         """1.5초마다 호출되어 최신 호가를 요청합니다."""

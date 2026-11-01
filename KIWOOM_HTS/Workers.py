@@ -168,3 +168,51 @@ class BalanceDataWorker(QThread):
                 
         except Exception as e:
             self.finished.emit(False, {"return_msg": str(e)})
+
+class ChartDataWorker(QThread):
+    finished = Signal(bool, str, list) # 성공여부, 종목코드, 차트데이터 배열
+
+    def __init__(self, api_handler, stock_code, timeframe):
+        super().__init__()
+        self.api = api_handler
+        self.stock_code = stock_code
+        self.timeframe = timeframe 
+
+    def run(self):
+        try:
+            result, api_id = self.api.get_chart_data(self.stock_code, self.timeframe)
+            
+            if result.get("return_code") == 0:
+                # 응답 형태에 맞춘 데이터 키 맵핑[cite: 8]
+                key_map = {
+                    'ka10079': 'stk_tic_chart_qry',
+                    'ka10080': 'stk_min_pole_chart_qry',
+                    'ka10081': 'stk_dt_pole_chart_qry',
+                    'ka10082': 'stk_stk_pole_chart_qry'
+                }
+                
+                target_key = key_map.get(api_id, 'stk_dt_pole_chart_qry')
+                raw_list = result.get(target_key, [])
+                
+                parsed_data = []
+                for t, item in enumerate(raw_list):
+                    o = abs(int(item.get("open_pric", 0)))
+                    h = abs(int(item.get("high_pric", 0)))
+                    l = abs(int(item.get("low_pric", 0)))
+                    c = abs(int(item.get("cur_prc", 0)))
+                    v = int(item.get("trde_qty", 0))
+                    
+                    # 일봉은 'dt', 분봉/틱봉은 'cntr_tm'을 키로 사용함
+                    time_str = item.get("dt", item.get("cntr_tm", ""))
+                    
+                    parsed_data.append((t, o, h, l, c, v, time_str)) # time_str 추가!
+                
+                parsed_data.reverse()
+                # 인덱스를 0부터 다시 정렬하며 time_str도 포함하여 반환
+                reindexed_data = [(i, row[1], row[2], row[3], row[4], row[5], row[6]) for i, row in enumerate(parsed_data)]
+                
+                self.finished.emit(True, self.stock_code, reindexed_data)
+            else:
+                self.finished.emit(False, self.stock_code, [])
+        except Exception as e:
+            self.finished.emit(False, self.stock_code, [])

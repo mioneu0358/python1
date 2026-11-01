@@ -122,6 +122,41 @@ class KiwoomRestAPI:
         response = requests.post(url, headers=headers, json=params)
         return response.json()        
 
+
+    def get_chart_data(self, stk_cd, timeframe="일봉", base_dt=None, cont_yn='N', next_key=''):
+        """요청된 주기에 맞춰 틱/분/일/주/월/년 차트 TR을 동적으로 호출합니다."""
+        if base_dt is None:
+            base_dt = datetime.now().strftime("%Y%m%d")
+
+        endpoint = '/api/dostk/chart'
+        url = self.base_url + endpoint
+        
+        # 콤보박스 선택값에 따른 API ID 및 파라미터 매핑
+        params = {'stk_cd': stk_cd, 'upd_stkpc_tp': '1'} 
+
+        if timeframe == "일봉":
+            api_id = 'ka10081'
+            params['base_dt'] = base_dt
+        elif timeframe == "주봉":
+            api_id = 'ka10082'
+            params['base_dt'] = base_dt
+        elif "분봉" in timeframe:
+            api_id = 'ka10080'
+            scope = timeframe.replace("분봉(", "").replace("분)", "") # 예: "분봉(3분)" -> "3"
+            params['base_dt'] = base_dt
+            params['tic_scope'] = scope
+        elif timeframe == "틱(10틱)":
+            api_id = 'ka10079'
+            params['tic_scope'] = '10'
+        else:
+            api_id = 'ka10081' # 기본값
+            params['base_dt'] = base_dt
+
+        headers = self.get_headers(api_id=api_id, cont_yn=cont_yn, next_key=next_key)
+        response = requests.post(url, headers=headers, json=params)
+        
+        # 워커에서 파싱할 때 어떤 데이터 키를 찾아야 하는지 알 수 있도록 api_id도 함께 반환
+        return response.json(), api_id
     
 if __name__ == "__main__":
     load_dotenv()
