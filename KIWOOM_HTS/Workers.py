@@ -69,8 +69,6 @@ class ChartDataWorker(QThread):
         except Exception as e:
             self.finished.emit(False, self.stock_code, [])
 
-import json
-
 # 스레드 간 공유될 실시간 호가 버퍼 (가장 최신 호가 상태만 유지)
 realtime_hoga_buffer = {}
 

@@ -5,7 +5,9 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                                QTabWidget, QComboBox, QSpinBox, QPushButton, 
                                QStatusBar, QDialog, QGroupBox, QHeaderView, 
                                QToolBar, QMenuBar, QColorDialog, QCheckBox, QMessageBox,
-                               QSplitter, QFrame, QGridLayout, QTableWidgetItem, QCompleter, QAbstractItemView,QMenu)
+                               QSplitter, QFrame, QGridLayout, QTableWidgetItem, QCompleter,
+                               QAbstractItemView,QMenu, QScrollArea)
+
 from PySide6.QtCore import Qt, QTimer, QStringListModel, QRectF
 from PySide6.QtGui import QAction, QColor, QPainter, QPicture, QCursor
 import pyqtgraph as pg
@@ -308,6 +310,160 @@ class BalanceDialog(QDialog):
 pg.setConfigOption('background', '#1e1e1e')
 pg.setConfigOption('foreground', '#d4d4d4')
 
+def format_volume(v):
+    """거래량을 K, M, B 단위로 변환하는 포맷터"""
+    if v < 100000:
+        return f"{int(v):,}"
+    elif v < 1000000:
+        return f"{v/1000:.1f}K"
+    elif v < 1000000000:
+        return f"{v/1000000:.2f}M"
+    else:
+        return f"{v/1000000000:.2f}B"
+
+
+class CollapsibleBox(QWidget):
+    def __init__(self, title="", parent=None):
+        super().__init__(parent)
+        self.toggle_button = QPushButton(f"{title}  ▼")
+        self.toggle_button.setStyleSheet(
+            "text-align: left; padding: 8px; font-weight: bold; background-color: #333333; color: white; border: 1px solid #555;")
+        self.toggle_button.clicked.connect(self.on_toggle)
+
+        self.content_area = QWidget()
+        self.content_layout = QVBoxLayout(self.content_area)
+        self.content_layout.setContentsMargins(10, 10, 10, 10)
+
+        layout = QVBoxLayout(self)
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.toggle_button)
+        layout.addWidget(self.content_area)
+
+        self.is_collapsed = True
+        self.content_area.setVisible(False)
+        self.title = title
+
+    def on_toggle(self):
+        self.is_collapsed = not self.is_collapsed
+        self.content_area.setVisible(not self.is_collapsed)
+        arrow = "▲" if not self.is_collapsed else "▼"
+        self.toggle_button.setText(f"{self.title}  {arrow}")
+
+
+class IndicatorSettingsDialog(QDialog):
+    def __init__(self, parent_tab):
+        super().__init__(parent_tab)
+        self.parent_tab = parent_tab
+        self.setWindowTitle("차트 지표 상세 설정")
+        self.resize(400, 500)
+        self.setStyleSheet("background-color: #1e1e1e; color: white;")
+
+        main_layout = QVBoxLayout(self)
+
+        # 스크롤 영역 (지표가 많아질 경우 대비)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll_content = QWidget()
+        self.scroll_layout = QVBoxLayout(scroll_content)
+        self.scroll_layout.setAlignment(Qt.AlignTop)
+
+        # 1. 이동평균선 섹션
+        self.sma_box = CollapsibleBox("이동평균선 (SMA)")
+        self.sma_rows_layout = QVBoxLayout()
+        self.sma_box.content_layout.addLayout(self.sma_rows_layout)
+
+        # 현재 부모 탭의 이평선 데이터를 불러와서 UI 구성
+        self.sma_inputs = {}  # {period: QLineEdit}
+        self.sma_colors = {}  # {period: color_string}
+        for period, color in self.parent_tab.sma_settings.items():
+            self.add_sma_row(period, color)
+
+        add_sma_btn = QPushButton("+ 선 추가하기")
+        add_sma_btn.setStyleSheet("background-color: #2b5797; padding: 5px;")
+        add_sma_btn.clicked.connect(lambda: self.add_sma_row("", "#ffffff"))
+        self.sma_box.content_layout.addWidget(add_sma_btn)
+
+        # 2. 볼린저밴드 섹션 (예비 UI)
+        self.bb_box = CollapsibleBox("볼린저밴드")
+        self.bb_box.content_layout.addWidget(QLabel("기간: 20  /  승수: 2 (추후 구현)"))
+
+        # 3. MACD 섹션 (예비 UI)
+        self.macd_box = CollapsibleBox("MACD")
+        self.macd_box.content_layout.addWidget(QLabel("단기: 12 / 장기: 26 / 시그널: 9 (추후 구현)"))
+
+        self.scroll_layout.addWidget(self.sma_box)
+        self.scroll_layout.addWidget(self.bb_box)
+        self.scroll_layout.addWidget(self.macd_box)
+
+        scroll.setWidget(scroll_content)
+        main_layout.addWidget(scroll)
+
+        # 하단 버튼
+        btn_layout = QHBoxLayout()
+        save_btn = QPushButton("설정 저장")
+        save_btn.setStyleSheet("background-color: #2b5797; font-weight: bold; padding: 10px;")
+        save_btn.clicked.connect(self.save_settings)
+        cancel_btn = QPushButton("설정 취소")
+        cancel_btn.setStyleSheet("background-color: #555555; padding: 10px;")
+        cancel_btn.clicked.connect(self.reject)
+
+        btn_layout.addWidget(save_btn)
+        btn_layout.addWidget(cancel_btn)
+        main_layout.addLayout(btn_layout)
+
+    def add_sma_row(self, period, color):
+        row_widget = QWidget()
+        row_layout = QHBoxLayout(row_widget)
+        row_layout.setContentsMargins(0, 0, 0, 0)
+
+        period_input = QLineEdit(str(period))
+        period_input.setPlaceholderText("일선")
+        period_input.setMaximumWidth(60)
+        period_input.setStyleSheet("background-color: #2d2d30;")
+
+        color_btn = QPushButton("■ 색상")
+        color_btn.setStyleSheet(f"color: {color}; font-weight: bold;")
+
+        # 색상 선택 다이얼로그 호출
+        def pick_color():
+            c = QColorDialog.getColor(QColor(color))
+            if c.isValid():
+                color_btn.setStyleSheet(f"color: {c.name()}; font-weight: bold;")
+                color_btn.setProperty("selected_color", c.name())
+
+        color_btn.setProperty("selected_color", color)
+        color_btn.clicked.connect(pick_color)
+
+        del_btn = QPushButton("X")
+        del_btn.setStyleSheet("background-color: #8c2a2a; color: white; max-width: 30px;")
+        del_btn.clicked.connect(lambda: row_widget.deleteLater())
+
+        row_layout.addWidget(period_input)
+        row_layout.addWidget(QLabel("일선"))
+        row_layout.addWidget(color_btn)
+        row_layout.addWidget(del_btn)
+
+        self.sma_rows_layout.addWidget(row_widget)
+
+    def save_settings(self):
+        new_sma = {}
+        for i in range(self.sma_rows_layout.count()):
+            widget = self.sma_rows_layout.itemAt(i).widget()
+            if widget:
+                # 위젯 내의 요소들 추출
+                period_str = widget.findChild(QLineEdit).text().strip()
+                color_btn = widget.findChildren(QPushButton)[0]
+                color = color_btn.property("selected_color")
+
+                if period_str.isdigit():
+                    new_sma[int(period_str)] = color
+
+        self.parent_tab.sma_settings = new_sma
+        self.parent_tab.request_new_data()  # 설정 저장 후 차트 새로고침
+        self.accept()
+
+
 class CandlestickItem(pg.GraphicsObject):
     """PyQtGraph를 이용한 캔들스틱 렌더링 커스텀 아이템"""
     def __init__(self, data):
@@ -365,174 +521,275 @@ class PriceAxisItem(pg.AxisItem):
 
 
 
-# --- 독립된 1개의 차트 탭 위젯 (툴바 + 십자선 + 정보표시 통합) ---
+
+# --- (기존 TimeAxisItem, PriceAxisItem, CandlestickItem 유지) ---
+
 class SingleChartTab(QWidget):
     def __init__(self, parent_main, stock_code, initial_tf="분봉(5분)"):
         super().__init__()
         self.main_ui = parent_main
         self.stock_code = stock_code
         self.chart_data = []
-        
+
+        # 이평선 초기 설정
+        self.sma_settings = {5: '#ff4c4c', 10: '#4c8cff', 20: '#ffcc00', 60: '#4cff4c', 120: '#ff4cff'}
+        self.sma_lines = {}
+
+        # 추세선 그리기 상태 변수
+        self.is_drawing_trend = False
+        self.trend_start_point = None
+        self.preview_trend_line = None
+        self.drawn_trend_lines = []
+
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        
+
         # 1) 개별 탭 툴바
         self.toolbar = QToolBar()
         self.tf_combo = QComboBox()
         self.tf_combo.addItems(["일봉", "주봉", "월봉", "분봉(1분)", "분봉(3분)", "분봉(5분)", "틱(10틱)"])
         self.tf_combo.setCurrentText(initial_tf)
-        self.tf_combo.setMinimumWidth(100) # [수정] 글자가 잘리지 않도록 최소 너비 확장
         self.tf_combo.currentTextChanged.connect(self.request_new_data)
         self.toolbar.addWidget(self.tf_combo)
-        
         self.toolbar.addSeparator()
-        self.toolbar.addAction("✏️ 추세선")
-        self.toolbar.addWidget(QPushButton("선 색상"))
+
+        # 추세선 토글 버튼
+        self.btn_trendline = QPushButton("✏️ 추세선 긋기")
+        self.btn_trendline.setCheckable(True)
+        self.btn_trendline.clicked.connect(self.toggle_trendline_mode)
+        self.toolbar.addWidget(self.btn_trendline)
         self.toolbar.addSeparator()
-        
-        # [수정] 지표 추가 콤보박스 부활
-        self.indicator_combo = QComboBox()
-        self.indicator_combo.addItems(["지표 추가 ▼", "이동평균선", "볼린저밴드", "MACD", "RSI"])
-        self.indicator_combo.setMinimumWidth(110)
-        self.toolbar.addWidget(self.indicator_combo)
-        
+
+        # [수정] 지표 추가 버튼 (팝업 호출)
+        btn_indicator = QPushButton("⚙️ 지표 설정")
+        btn_indicator.clicked.connect(self.open_indicator_settings)
+        self.toolbar.addWidget(btn_indicator)
+
+        # [수정] 상단 정보 라벨 (폰트 크기 확대)
         self.info_label = QLabel(" 차트에 마우스를 올리면 정보가 표시됩니다.")
-        self.info_label.setStyleSheet("color: #ffcc00; font-weight: bold; padding: 2px;")
-        
+        self.info_label.setStyleSheet(
+            "color: #ffcc00; font-weight: bold; padding: 4px; font-size: 14px;")  # 폰트 14px로 증가
+
         layout.addWidget(self.toolbar)
         layout.addWidget(self.info_label)
 
-        # 2) 차트 뷰 생성
+        # 2) 차트 레이아웃
+        self.layout_widget = pg.GraphicsLayoutWidget()
+        layout.addWidget(self.layout_widget)
         self.x_axis = TimeAxisItem(orientation='bottom')
-        self.y_axis = PriceAxisItem(orientation='left')
-        self.chart_view = pg.PlotWidget(axisItems={'bottom': self.x_axis, 'left': self.y_axis})
-        self.chart_view.showGrid(x=True, y=True, alpha=0.3)
-        
-        # [수정] pyqtgraph 기본 우클릭 메뉴 비활성화 및 커스텀 메뉴 연결
-        self.chart_view.setMenuEnabled(False) 
-        self.chart_view.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.chart_view.customContextMenuRequested.connect(self.show_custom_context_menu)
-        
-        # [수정] 마우스 조작: 세로 이동/확대 금지 (가로로만 이동/확대 가능)
-        self.chart_view.getViewBox().setMouseEnabled(x=True, y=False)
-        # 가로 범위(X축)가 바뀔 때마다 Y축(가격) 범위를 자동으로 맞추는 시그널 연결
-        self.chart_view.getViewBox().sigXRangeChanged.connect(self.update_y_auto_scale)
 
-        layout.addWidget(self.chart_view)
+        self.price_plot = self.layout_widget.addPlot(row=0, col=0,
+                                                     axisItems={'left': PriceAxisItem(orientation='left')})
+        self.price_plot.showGrid(x=True, y=True, alpha=0.3)
+        self.price_plot.hideAxis('bottom')
 
-        # 3) 십자선 세팅
-        self.vLine = pg.InfiniteLine(angle=90, movable=False, pen=pg.mkPen(color='gray', style=Qt.DashLine))
-        self.hLine = pg.InfiniteLine(angle=0, movable=False, pen=pg.mkPen(color='gray', style=Qt.DashLine))
-        self.chart_view.addItem(self.vLine, ignoreBounds=True)
-        self.chart_view.addItem(self.hLine, ignoreBounds=True)
-        
-        self.proxy = pg.SignalProxy(self.chart_view.scene().sigMouseMoved, rateLimit=60, slot=self.mouseMoved)
+        self.vol_plot = self.layout_widget.addPlot(row=1, col=0, axisItems={'bottom': self.x_axis})
+        self.vol_plot.showGrid(x=True, y=True, alpha=0.3)
+        self.vol_plot.setMaximumHeight(200)
+        self.vol_plot.setXLink(self.price_plot)
+
+        # 이평선 범례 (Legend) 추가 (좌측 상단 고정)
+        self.legend = pg.LegendItem(offset=(20, 20))
+        self.legend.setParentItem(self.price_plot.graphicsItem())
+
+        # 마우스 이동 및 줌 제어
+        self.price_plot.getViewBox().setMouseEnabled(x=True, y=False)
+        self.vol_plot.getViewBox().setMouseEnabled(x=True, y=False)
+        self.price_plot.getViewBox().sigXRangeChanged.connect(self.update_y_auto_scale)
+        self.price_plot.setMenuEnabled(False)
+        self.vol_plot.setMenuEnabled(False)
+
+        # 십자선 (Crosshair)
+        self.vLine = pg.InfiniteLine(angle=90, movable=False, pen=pg.mkPen(color='#888888', style=Qt.DashLine))
+        self.hLine = pg.InfiniteLine(angle=0, movable=False, pen=pg.mkPen(color='#888888', style=Qt.DashLine))
+        self.price_plot.addItem(self.vLine, ignoreBounds=True)
+        self.price_plot.addItem(self.hLine, ignoreBounds=True)
+        self.vLine_vol = pg.InfiniteLine(angle=90, movable=False, pen=pg.mkPen(color='#888888', style=Qt.DashLine))
+        self.vol_plot.addItem(self.vLine_vol, ignoreBounds=True)
+
+        self.y_label = pg.TextItem(fill=pg.mkBrush('#2d2d30'), color='w', anchor=(0, 0.5))
+        self.x_label = pg.TextItem(fill=pg.mkBrush('#2d2d30'), color='w', anchor=(0.5, 0))
+        self.price_plot.addItem(self.y_label, ignoreBounds=True)
+        self.vol_plot.addItem(self.x_label, ignoreBounds=True)
+
+        # 마우스 이벤트 연결 (이동 및 클릭)
+        self.proxy_move = pg.SignalProxy(self.price_plot.scene().sigMouseMoved, rateLimit=60, slot=self.mouseMoved)
+        self.proxy_click = pg.SignalProxy(self.price_plot.scene().sigMouseClicked, rateLimit=60, slot=self.mouseClicked)
+
         self.request_new_data()
 
-    def show_custom_context_menu(self, pos):
-        """우클릭 시 호출되는 우리가 만든 커스텀 메뉴"""
-        menu = QMenu(self)
-        menu.setStyleSheet("QMenu { background-color: #2d2d30; color: white; border: 1px solid #555; } QMenu::item:selected { background-color: #3e3e42; }")
-        
-        fav_action = QAction(f"⭐ '{self.stock_code}' 즐겨찾기 추가", self)
-        # fav_action.triggered.connect(...) # 나중에 즐겨찾기 트리와 연결
-        menu.addAction(fav_action)
-        
-        menu.addSeparator()
-        
-        buy_action = QAction(f"🔴 '{self.stock_code}' 매수 주문", self)
-        sell_action = QAction(f"🔵 '{self.stock_code}' 매도 주문", self)
-        menu.addAction(buy_action)
-        menu.addAction(sell_action)
-        
-        menu.exec_(QCursor.pos())
+    def open_indicator_settings(self):
+        dialog = IndicatorSettingsDialog(self)
+        dialog.exec()
+
+    def toggle_trendline_mode(self):
+        self.is_drawing_trend = self.btn_trendline.isChecked()
+        if not self.is_drawing_trend:
+            # 취소 시 미리보기 선 제거
+            self.trend_start_point = None
+            if self.preview_trend_line:
+                self.price_plot.removeItem(self.preview_trend_line)
+                self.preview_trend_line = None
+
+    def mouseClicked(self, evt):
+        evt = evt[0]
+        # 우클릭 시 추세선 그리기 즉시 취소
+        if evt.button() == Qt.RightButton and self.is_drawing_trend:
+            self.btn_trendline.setChecked(False)
+            self.toggle_trendline_mode()
+            return
+
+        if not self.is_drawing_trend or evt.button() != Qt.LeftButton:
+            return
+
+        pos = evt.scenePos()
+        if self.price_plot.sceneBoundingRect().contains(pos):
+            mousePoint = self.price_plot.vb.mapSceneToView(pos)
+
+            # 첫 번째 클릭: 시작점 설정
+            if not self.trend_start_point:
+                self.trend_start_point = (mousePoint.x(), mousePoint.y())
+                self.preview_trend_line = pg.PlotDataItem([self.trend_start_point[0], self.trend_start_point[0]],
+                                                          [self.trend_start_point[1], self.trend_start_point[1]],
+                                                          pen=pg.mkPen('#ff9900', width=2))
+                self.price_plot.addItem(self.preview_trend_line)
+            # 두 번째 클릭: 끝점 설정 및 확정
+            else:
+                final_line = pg.PlotDataItem([self.trend_start_point[0], mousePoint.x()],
+                                             [self.trend_start_point[1], mousePoint.y()],
+                                             pen=pg.mkPen('#ff9900', width=2))
+                self.price_plot.addItem(final_line)
+                self.drawn_trend_lines.append(final_line)
+
+                # 그리기 모드 종료
+                self.price_plot.removeItem(self.preview_trend_line)
+                self.preview_trend_line = None
+                self.trend_start_point = None
+                self.btn_trendline.setChecked(False)
+                self.is_drawing_trend = False
+
+    def mouseMoved(self, evt):
+        pos = evt[0]
+        if self.price_plot.sceneBoundingRect().contains(pos):
+            mousePoint = self.price_plot.vb.mapSceneToView(pos)
+            index = int(round(mousePoint.x()))
+            price = mousePoint.y()
+
+            self.vLine.setPos(mousePoint.x())
+            self.hLine.setPos(price)
+            self.vLine_vol.setPos(mousePoint.x())
+
+            # 추세선 미리보기 업데이트
+            if self.is_drawing_trend and self.trend_start_point and self.preview_trend_line:
+                self.preview_trend_line.setData([self.trend_start_point[0], mousePoint.x()],
+                                                [self.trend_start_point[1], mousePoint.y()])
+
+            view_rect = self.price_plot.viewRect()
+            self.y_label.setPos(view_rect.right(), price)
+            self.y_label.setText(f"{int(price):,}")
+
+            if 0 <= index < len(self.chart_data):
+                time_val = self.x_axis.x_labels.get(index, "")
+                vol_view_rect = self.vol_plot.viewRect()
+                self.x_label.setPos(mousePoint.x(), vol_view_rect.bottom())
+                self.x_label.setText(time_val)
+
+                row = self.chart_data[index]
+                o, h, l, c, v = row[1], row[2], row[3], row[4], row[5]
+                # [수정] 거래량에 포맷터 적용 (K, M, B)
+                self.info_label.setText(
+                    f"[{time_val}]  시가: {o:,}  고가: {h:,}  저가: {l:,}  종가: {c:,}  거래량: {format_volume(v)}")
 
     def update_y_auto_scale(self):
-        """현재 화면에 보이는 X축 범위 내의 봉들만 계산해서 Y축(가격) 높낮이를 자동 조절합니다."""
         if not self.chart_data: return
-        
-        # 현재 화면에 보이는 X축 최소/최대 인덱스
-        view_range = self.chart_view.viewRange()
+        view_range = self.price_plot.viewRange()
         x_min, x_max = int(view_range[0][0]), int(view_range[0][1])
-        
-        # 데이터 범위를 벗어나지 않게 보정
-        x_min = max(0, x_min)
-        x_max = min(len(self.chart_data) - 1, x_max)
-        
+        x_min, x_max = max(0, x_min), min(len(self.chart_data) - 1, x_max)
+
         if x_min >= x_max: return
-        
-        # 보이는 범위 내의 고가(High)와 저가(Low) 수집
-        visible_data = self.chart_data[x_min:x_max+1]
+
+        visible_data = self.chart_data[x_min:x_max + 1]
         max_price = max([row[2] for row in visible_data])
         min_price = min([row[3] for row in visible_data])
-        
-        # 위아래 5% 여백을 두고 Y축 강제 고정
+
         margin = (max_price - min_price) * 0.05
         if margin == 0: margin = max_price * 0.01
-        self.chart_view.getViewBox().setYRange(min_price - margin, max_price + margin, padding=0)
+        self.price_plot.getViewBox().setYRange(min_price - margin, max_price + margin, padding=0)
 
     def request_new_data(self):
-        """콤보박스 변경 시 자신의 탭 데이터만 다시 불러옴"""
         selected_tf = self.tf_combo.currentText()
-        # 주의: 메인 창의 api 객체를 참조함
+        # [주의] 워커 임포트 확인 필요
+        from Workers import ChartDataWorker
         self.worker = ChartDataWorker(self.main_ui.api, self.stock_code, selected_tf)
         self.worker.finished.connect(self.draw_chart)
         self.worker.start()
 
+    def get_sma(self, prices, window):
+        sma = []
+        for i in range(len(prices)):
+            if i < window - 1:
+                sma.append(None)
+            else:
+                sma.append(sum(prices[i - window + 1:i + 1]) / window)
+        return sma
+
     def draw_chart(self, success, stock_code, chart_data):
         if not success or not chart_data: return
         self.chart_data = chart_data
-        self.chart_view.clear() # 기존 캔들 삭제
-        self.chart_view.addItem(self.vLine, ignoreBounds=True)
-        self.chart_view.addItem(self.hLine, ignoreBounds=True)
-        
-        # X축 시간 매핑 데이터 생성 (포맷팅)
+
+        self.price_plot.clear()
+        self.vol_plot.clear()
+        self.legend.clear()  # 범례 초기화
+
+        self.price_plot.addItem(self.vLine, ignoreBounds=True)
+        self.price_plot.addItem(self.hLine, ignoreBounds=True)
+        self.vol_plot.addItem(self.vLine_vol, ignoreBounds=True)
+        self.price_plot.addItem(self.y_label, ignoreBounds=True)
+        self.vol_plot.addItem(self.x_label, ignoreBounds=True)
+
+        # 기존에 그려둔 추세선 복구
+        for line in self.drawn_trend_lines:
+            self.price_plot.addItem(line)
+
         x_dict = {}
+        closes = []
+        vols = []
         for (i, o, h, l, c, v, dt_str) in chart_data:
-            # 예: "20261101153000" -> "11/01 15:30", "20261101" -> "11/01"
-            if len(dt_str) >= 12: 
+            closes.append(c)
+            vols.append(v)
+            if len(dt_str) >= 12:
                 fmt_str = f"{dt_str[4:6]}/{dt_str[6:8]} {dt_str[8:10]}:{dt_str[10:12]}"
             else:
                 fmt_str = f"{dt_str[0:4]}/{dt_str[4:6]}/{dt_str[6:8]}"
             x_dict[i] = fmt_str
-            
+
         self.x_axis.update_labels(x_dict)
-        
-        # 캔들스틱 그리기 (시간 튜플에서 time_str을 제외하고 넘김)
+
         pure_ohlc = [(row[0], row[1], row[2], row[3], row[4], row[5]) for row in chart_data]
         candlestick = CandlestickItem(pure_ohlc)
-        self.chart_view.addItem(candlestick)
-        
-        # 확대/축소 제한 (Limits) 설정
-        # y축 최소/최고가 찾기
-        min_y = min([row[3] for row in chart_data])
-        max_y = max([row[2] for row in chart_data])
-        margin = (max_y - min_y) * 0.1
-        
-        # # x축은 -5 ~ 데이터길이+5 까지만 이동 가능하게 제한
-        # self.chart_view.setLimits(xMin=-5, xMax=len(chart_data)+5, 
-        #                           yMin=min_y - margin, yMax=max_y + margin)
-        self.chart_view.autoRange()
+        self.price_plot.addItem(candlestick)
 
-    def mouseMoved(self, evt):
-        pos = evt[0]
-        if self.chart_view.sceneBoundingRect().contains(pos):
-            mousePoint = self.chart_view.plotItem.vb.mapSceneToView(pos)
-            index = int(round(mousePoint.x()))
-            
-            # 십자선 이동
-            self.vLine.setPos(mousePoint.x())
-            self.hLine.setPos(mousePoint.y())
-            
-            # 인덱스가 데이터 범위 안일 때 상단 라벨에 OHLC 업데이트
-            if 0 <= index < len(self.chart_data):
-                row = self.chart_data[index]
-                time_val = self.x_axis.x_labels.get(index, "")
-                o, h, l, c, v = row[1], row[2], row[3], row[4], row[5]
-                # 등락률 계산 (전 캔들 대비가 아닌 단순히 시가 대비로 임시 표시, API에서 전일대비 받아와서 적용가능)
-                self.info_label.setText(
-                    f"[{time_val}]  시가: {o:,}  고가: {h:,}  저가: {l:,}  종가: {c:,}  거래량: {v:,}"
-                )
+        # 이평선 렌더링 및 범례 추가
+        x_indices = list(range(len(closes)))
+        # 기간(period) 기준 오름차순 정렬하여 순서대로 범례에 표시
+        for period in sorted(self.sma_settings.keys()):
+            color = self.sma_settings[period]
+            sma_values = self.get_sma(closes, period)
+
+            valid_x = [x for x, y in zip(x_indices, sma_values) if y is not None]
+            valid_y = [y for y in sma_values if y is not None]
+
+            if valid_y:
+                # name 인자를 주면 범례에 자동 추가됨
+                line = self.price_plot.plot(valid_x, valid_y, pen=pg.mkPen(color=color, width=1.5), name=f"{period}일선")
+                self.sma_lines[period] = line
+
+        # 거래량 (지정하신 네온 청녹색)
+        vol_bar = pg.BarGraphItem(x=x_indices, height=vols, width=0.6, brush='#1DD498', pen='#1DD498')
+        self.vol_plot.addItem(vol_bar)
+
+        self.price_plot.setLimits(xMin=-5, xMax=len(chart_data) + 5)
+        self.update_y_auto_scale()
 
 
 class HTSMainWindow(QMainWindow):
