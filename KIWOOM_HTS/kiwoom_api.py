@@ -32,7 +32,7 @@ class KiwoomRestAPI:
         response = requests.post(url, headers=headers, json=body)
         if response.status_code == 200:
             data = response.json()
-            print(data)
+            print(f"token_json: {data}")
             self.access_token = data.get("token")
             expires_in = data.get("expires_dt") # 기본 24시간
             self.expires_dt = datetime.strptime(expires_in, "%Y%m%d%H%M%S")

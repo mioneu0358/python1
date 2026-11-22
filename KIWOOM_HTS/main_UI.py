@@ -9,12 +9,12 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                                QAbstractItemView,QMenu, QScrollArea)
 
 from PySide6.QtCore import Qt, QTimer, QStringListModel, QRectF
-from PySide6.QtGui import QAction, QColor, QPainter, QPicture, QCursor
+from PySide6.QtGui import QAction, QColor, QPainter, QPicture, QCursor, QPixmap, QFont
 import pyqtgraph as pg
 
 from dotenv import load_dotenv, set_key
 
-# --- 분리된 모듈 임포트 ---
+
 from kiwoom_api import KiwoomRestAPI
 from Workers import SystemInitWorker, ChartDataWorker, KiwoomWebSocketWorker, HogaDataWorker, BalanceDataWorker
 
@@ -322,6 +322,18 @@ def format_volume(v):
         return f"{v/1000000000:.2f}B"
 
 
+class VolumeAxisItem(pg.AxisItem):
+    """거래량 차트 Y축 전용 (K, M, B 단위 변환)"""
+    def tickStrings(self, values, scale, spacing):
+        def format_vol(v):
+            if v < 100000: return f"{int(v):,}"
+            elif v < 1000000: return f"{v/1000:.1f}K"
+            elif v < 1000000000: return f"{v/1000000:.2f}M"
+            else: return f"{v/1000000000:.2f}B"
+        return [format_vol(value) for value in values]
+
+
+
 class CollapsibleBox(QWidget):
     def __init__(self, title="", parent=None):
         super().__init__(parent)
@@ -583,7 +595,8 @@ class SingleChartTab(QWidget):
         self.price_plot.showGrid(x=True, y=True, alpha=0.3)
         self.price_plot.hideAxis('bottom')
 
-        self.vol_plot = self.layout_widget.addPlot(row=1, col=0, axisItems={'bottom': self.x_axis})
+        self.vol_axis = VolumeAxisItem(orientation='left')
+        self.vol_plot = self.layout_widget.addPlot(row=1, col=0, axisItems={'bottom': self.x_axis, 'left': self.vol_axis})
         self.vol_plot.showGrid(x=True, y=True, alpha=0.3)
         self.vol_plot.setMaximumHeight(200)
         self.vol_plot.setXLink(self.price_plot)
@@ -598,6 +611,8 @@ class SingleChartTab(QWidget):
         self.price_plot.getViewBox().sigXRangeChanged.connect(self.update_y_auto_scale)
         self.price_plot.setMenuEnabled(False)
         self.vol_plot.setMenuEnabled(False)
+        self.layout_widget.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.layout_widget.customContextMenuRequested.connect(self.show_custom_context_menu)
 
         # 십자선 (Crosshair)
         self.vLine = pg.InfiniteLine(angle=90, movable=False, pen=pg.mkPen(color='#888888', style=Qt.DashLine))
@@ -618,14 +633,31 @@ class SingleChartTab(QWidget):
 
         self.request_new_data()
 
+    def create_pencil_cursor(self):
+        pixmap = QPixmap(32, 32)
+        pixmap.fill(Qt.transparent)
+        painter = QPainter(pixmap)
+        painter.setFont(QFont("Segoe UI Emoji", 18))
+        painter.drawText(pixmap.rect(), Qt.AlignCenter, "✏️")
+        painter.end()
+        # (2, 28)은 연필 심의 끝부분을 실제 클릭 지점(HotSpot)으로 맞추기 위함
+        return QCursor(pixmap, 2, 28)
+
+
     def open_indicator_settings(self):
         dialog = IndicatorSettingsDialog(self)
         dialog.exec()
 
     def toggle_trendline_mode(self):
         self.is_drawing_trend = self.btn_trendline.isChecked()
-        if not self.is_drawing_trend:
-            # 취소 시 미리보기 선 제거
+        if self.is_drawing_trend:
+            # 활성화 시: 주황색 강조 + 연필 커서 적용
+            self.btn_trendline.setStyleSheet("background-color: #d97706; color: white; font-weight: bold;")
+            self.layout_widget.setCursor(self.create_pencil_cursor())
+        else:
+            # 비활성화 시: 스타일 및 커서 원복 + 미리보기 선 제거
+            self.btn_trendline.setStyleSheet("")
+            self.layout_widget.unsetCursor()
             self.trend_start_point = None
             if self.preview_trend_line:
                 self.price_plot.removeItem(self.preview_trend_line)
@@ -633,12 +665,7 @@ class SingleChartTab(QWidget):
 
     def mouseClicked(self, evt):
         evt = evt[0]
-        # 우클릭 시 추세선 그리기 즉시 취소
-        if evt.button() == Qt.RightButton and self.is_drawing_trend:
-            self.btn_trendline.setChecked(False)
-            self.toggle_trendline_mode()
-            return
-
+        # 좌클릭이 아니거나 추세선 모드가 아니면 무시
         if not self.is_drawing_trend or evt.button() != Qt.LeftButton:
             return
 
@@ -649,24 +676,26 @@ class SingleChartTab(QWidget):
             # 첫 번째 클릭: 시작점 설정
             if not self.trend_start_point:
                 self.trend_start_point = (mousePoint.x(), mousePoint.y())
-                self.preview_trend_line = pg.PlotDataItem([self.trend_start_point[0], self.trend_start_point[0]],
-                                                          [self.trend_start_point[1], self.trend_start_point[1]],
-                                                          pen=pg.mkPen('#ff9900', width=2))
+                self.preview_trend_line = pg.PlotDataItem(
+                    [self.trend_start_point[0], self.trend_start_point[0]],
+                    [self.trend_start_point[1], self.trend_start_point[1]],
+                    pen=pg.mkPen('#ff9900', width=2)
+                )
                 self.price_plot.addItem(self.preview_trend_line)
-            # 두 번째 클릭: 끝점 설정 및 확정
+            # 두 번째 클릭: 선 확정 (모드는 해제하지 않고 유지)
             else:
-                final_line = pg.PlotDataItem([self.trend_start_point[0], mousePoint.x()],
-                                             [self.trend_start_point[1], mousePoint.y()],
-                                             pen=pg.mkPen('#ff9900', width=2))
+                final_line = pg.PlotDataItem(
+                    [self.trend_start_point[0], mousePoint.x()],
+                    [self.trend_start_point[1], mousePoint.y()],
+                    pen=pg.mkPen('#ff9900', width=2)
+                )
                 self.price_plot.addItem(final_line)
                 self.drawn_trend_lines.append(final_line)
 
-                # 그리기 모드 종료
+                # 미리보기 선과 시작점만 초기화 (다음 선을 바로 그릴 수 있음)
                 self.price_plot.removeItem(self.preview_trend_line)
                 self.preview_trend_line = None
                 self.trend_start_point = None
-                self.btn_trendline.setChecked(False)
-                self.is_drawing_trend = False
 
     def mouseMoved(self, evt):
         pos = evt[0]
@@ -791,6 +820,84 @@ class SingleChartTab(QWidget):
         self.price_plot.setLimits(xMin=-5, xMax=len(chart_data) + 5)
         self.update_y_auto_scale()
 
+        total_len = len(chart_data)
+        self.price_plot.setLimits(xMin=-5, xMax=total_len + 10)
+        
+        # [핵심 수정] 초기 렌더링 시 최근 80개 봉만 화면에 꽉 차게 X축 범위 지정
+        start_x = max(0, total_len - 80)
+        self.price_plot.setXRange(start_x, total_len + 3, padding=0)
+        
+        # 지정된 X축 범위에 맞춰 Y축 높이 자동 정렬
+        self.update_y_auto_scale()
+
+    def find_clicked_trendline(self, scene_pos, threshold_px=10.0):
+        vb = self.price_plot.getViewBox()
+        px, py = scene_pos.x(), scene_pos.y()
+
+        for line in self.drawn_trend_lines:
+            x_data, y_data = line.getData()
+            if x_data is None or len(x_data) < 2:
+                continue
+
+            # 선분의 양 끝점을 View 좌표 -> 화면 픽셀(Scene) 좌표로 변환
+            p1 = vb.mapViewToScene(pg.Point(x_data[0], y_data[0]))
+            p2 = vb.mapViewToScene(pg.Point(x_data[1], y_data[1]))
+
+            x1, y1 = p1.x(), p1.y()
+            x2, y2 = p2.x(), p2.y()
+
+            # 점(px, py)과 선분(p1-p2) 사이의 최단 거리 공식
+            dx, dy = x2 - x1, y2 - y1
+            if dx == 0 and dy == 0:
+                dist = math.hypot(px - x1, py - y1)
+            else:
+                t = max(0.0, min(1.0, ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy)))
+                proj_x = x1 + t * dx
+                proj_y = y1 + t * dy
+                dist = math.hypot(px - proj_x, py - proj_y)
+
+            if dist <= threshold_px:
+                return line
+        return None
+
+    def show_custom_context_menu(self, pos):
+        # 추세선 그리는 도중에 우클릭하면 메뉴 대신 그리기 취소
+        if self.is_drawing_trend:
+            self.btn_trendline.setChecked(False)
+            self.toggle_trendline_mode()
+            return
+
+        menu = QMenu(self)
+        menu.setStyleSheet("QMenu { background-color: #2d2d30; color: white; border: 1px solid #555; } QMenu::item:selected { background-color: #3e3e42; }")
+
+        # 클릭된 위젯 좌표를 Scene 좌표로 변환하여 추세선 히트 테스트 실행
+        scene_pos = self.layout_widget.mapToScene(pos)
+        target_line = self.find_clicked_trendline(scene_pos)
+
+        if target_line:
+            color_action = QAction("🎨 이 추세선 색상 변경", self)
+            color_action.triggered.connect(lambda: self.change_trendline_color(target_line))
+            menu.addAction(color_action)
+
+            del_action = QAction("🗑️ 이 추세선 삭제", self)
+            del_action.triggered.connect(lambda: self.delete_trendline(target_line))
+            menu.addAction(del_action)
+            menu.addSeparator()
+
+        fav_action = QAction(f"⭐ '{self.stock_code}' 즐겨찾기 추가", self)
+        menu.addAction(fav_action)
+        menu.exec_(QCursor.pos())
+
+    def change_trendline_color(self, line_item):
+        color = QColorDialog.getColor()
+        if color.isValid():
+            line_item.setPen(pg.mkPen(color.name(), width=2))
+
+    def delete_trendline(self, line_item):
+        self.price_plot.removeItem(line_item)
+        if line_item in self.drawn_trend_lines:
+            self.drawn_trend_lines.remove(line_item)
+
 
 class HTSMainWindow(QMainWindow):
     def __init__(self, api_handler):
@@ -832,7 +939,6 @@ class HTSMainWindow(QMainWindow):
         central_layout = QVBoxLayout(central_widget)
         central_layout.setContentsMargins(0, 0, 0, 0)
         
-        # [수정] 메인 툴바를 다시 살려서 프로그램 전역 기능(잔고조회 등) 배치
         main_toolbar = QToolBar("메인 도구")
         main_toolbar.setMovable(False)
         main_toolbar.setStyleSheet("background-color: #252526; border-bottom: 1px solid #333;")
@@ -848,22 +954,15 @@ class HTSMainWindow(QMainWindow):
         self.chart_tabs.setTabsClosable(True)
         self.chart_tabs.tabCloseRequested.connect(self.close_chart_tab)
         
-        default_chart = QLabel("종목을 검색하면 독립된 차트 탭이 생성됩니다.")
-        default_chart.setAlignment(Qt.AlignCenter)
-        default_chart.setStyleSheet("background-color: #1e1e1e; color: #888888; font-size: 16px;")
-        self.chart_tabs.addTab(default_chart, "기본 차트")
-        
         central_layout.addWidget(self.chart_tabs)
         self.setCentralWidget(central_widget)
 
+    def close_chart_tab(self, index):   
+        self.chart_tabs.removeTab(index)
         
     def open_balance_dialog(self):
             dialog = BalanceDialog(self, self.api)
             dialog.exec()
-
-    def close_chart_tab(self, index):
-        if self.chart_tabs.count() > 1:
-            self.chart_tabs.removeTab(index)
 
 
     def select_color(self):
